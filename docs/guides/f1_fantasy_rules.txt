@@ -1,0 +1,172 @@
+What’s New for 2025
+
+Transfers
+
+If your driver competes in the Sprint but is replaced before Grand Prix Qualifying, you’ll get a transfer suggestion so you can avoid Not Classified penalties. This suggestion still comes out of your transfer limit, and is still a -10 point penalty if you exceed it.
+Pitstops
+
+Every team will now get points for pitstops during the Grand Prix (but not Sprints). The number of points each team gets will be based on their fastest pitstop during the race. A 5-point bonus will go to the constructor who records the fastest pitstop of the race. Set a new world record, and they’ll score a 15-point bonus.
+Disqualification penalties
+
+Penalty points for being disqualified will now be applied to their constructor instead of the driver themselves. Disqualified drivers will not gain any points for the session they were disqualified from.
+Scoring
+
+Points will be awarded/deducted based on the Driver/Constructor’s performance at the Grand Prix. Classifications through the weekend are based on decisions made by the FIA and Formula 1®
+
+For details on how multipliers and chips will affect scoring please visit the FAQ’s page
+Qualifying
+
+Drivers
+
+Qualifying Result
+
+Pole position (1st place)	10 points
+2nd place	9 points
+3rd place	8 points
+4th place	7 points
+5th place	6 points
+6th place	5 points
+7th place	4 points
+8th place	3 points
+9th place	2 points
+10th place	1 point
+11th - 20th place	0 points
+NC/No time set *	-5 points
+Disqualified ****	-5 points
+*Drivers who do not set a time in Q1 will be given a 5 point penalty. This includes inactive drivers.
+Constructors
+
+Constructors will score the combined total of their two drivers in Qualifying, as listed above.
+
+Constructors will also score points for achieving one of the following:
+
+Neither driver reaches Q2	-1 point
+One driver reaches Q2	1 point
+Both drivers reach Q2	3 points
+One driver reaches Q3	5 points
+Both drivers reach Q3	10 points
+Sprint
+
+Drivers
+
+Positions Gained *	1 point per position
+Positions Lost	-1 point per position
+Overtakes made **	1 point per overtake
+Fastest Lap	5 points
+Sprint Result
+
+1st place	8 points
+2nd place	7 points
+3rd place	6 points
+4th place	5 points
+5th place	4 points
+6th place	3 points
+7th place	2 points
+8th place	1 point
+9th - 20th place	0 points
+DNF/Not classified*	-20 points
+Disqualified ****	-20 points
+*DNF/Not Classified penalties apply to all drivers, including those classed as inactive or otherwise not included in the final starting grid list for the race
+Constructors
+
+Constructors will score the combined total of their two drivers in the Sprint, as listed above.
+Race
+
+Drivers
+
+Positions Gained *	1 point per position
+Positions Lost	Positions Lost
+Overtakes made **	1 point per overtake
+Fastest Lap	10 points
+Driver Of The Day ***	10 points (Driver only)
+Race Result
+
+1st place	25 points
+2nd place	18 points
+3rd place	15 points
+4th place	12 points
+5th place	10 points
+6th place	8 points
+7th place	6 points
+8th place	4 points
+9th place	2 points
+10th place	1 point
+11th - 20th place	0 points
+DNF/Not classified*	-20 points
+Disqualified ****	-20 points
+*DNF/Not Classified penalties apply to all drivers, including those classed as inactive or otherwise not included in the final starting grid list for the race
+Constructors
+
+Constructors will score the combined total of their two drivers in the Race as listed above, with the exception of the Driver Of The Day bonus.
+
+Constructors will also score points for the following:
+Pitstop times
+
+Over 3.0s	0 points
+2.50 - 2.99s	2 points
+2.20 - 2.49s	5 points
+2.00 - 2.19s	10 points
+Under 2.0s	20 points
+Disqualified ****	-20 points per driver
+5 point bonus - Awarded to the team that records the overall fastest pitstop of the race.
+
+15 point bonus - Awarded to any team that sets a new world record time (current record 1.8s set by McLaren in Qatar 2023).
+Team Management
+
+Exceeding the free transfer allowance	-10 points (per additional transfer)
+* Positions gained/lost are calculated based on the starting and finishing position of the driver in the race and not they’re qualifying result. Unclassified drivers will not have any positions lost calculated, instead they will receive the -20point penalty. Cars starting from the pitlane will be considered to have started from a position relative to the last car on the grid.
+
+** Overtakes are considered valid when one driver legally passes another on track, and the driver passed was not entering or in the pit lane or suffering a car failure or going unreasonably slow.
+
+*** Driver Of The Day is the result of the official F1® Driver Of The Day award.
+
+**** Additional penalty points earned for disqualifications will now be applied to the constructor instead of the drivers. Disqualified drivers will only receive the Not Classified penalties (-20 for the race instead of the previous -25 points). The constructor will receive an additional 10 point penalty for disqualification from the race/sprint, resulting in -30 points as the driver's contribution to their race/sprint total. The same follows for the qualifying session, with an additional 5 point penalty to the constructor for the disqualification, resulting in -10 points as the driver's contribution to the qualifying total.
+
+FAQs
+
+Picking a team
+
+Can I pick more than one team?
+You can pick and manage up to three teams.
+
+What is the DRS Boost?
+Pick one driver in your team to receive the DRS Boost. Any driver in your team can receive the DRS Boost which will double their score for that Grand Prix. The DRS Boost only applies to the selected driver, it does not affect the points scored by constructors.
+
+How many changes can I make to my team?
+Before your first Grand Prix you can hone your team by making as many transfers in/out of your team as you like – just stay within the cost cap.
+
+After each race you may make 2 transfers for each team that you manage. If you make more than the allowed transfers, each additional transfer will incur a 10 point penalty for your team.
+
+1 unused transfer will carry over to the next race. However, this must be used for the following race and carry-overs won’t accumulate throughout the season.
+
+Do the prices of the drivers and constructors change?
+Prices for the drivers and constructors will be updated after each race. Prices can increase or decrease depending on their performance and will remain fixed until the next Grand Prix.
+
+What are chips?
+F1® Teams constantly bring upgrades for their cars and chips can help power-up your team too. Each chip will suit different situations throughout the season. Whether it’s helping you to make wholesale changes to your line-up or giving one driver a huge x3 score multiplier there’s a chip that can help. Once you’ve chosen to use one of your chips that decision is final and cannot be cancelled.
+
+When can I use chips?
+There are 6 chips available in total and you can choose from 3 of these straightaway - these are Autopilot, Extra DRS Boost and No Negative. The remaining 3 will unlock for your team’s 2nd race. Each chip can only be used once during the season and you can only use one per race, so choose carefully.
+
+What is the Autopilot chip?
+Autopilot will change the DRS Boost selection and give it to the highest scoring driver in your team, if that turns out to be different to your original choice.
+
+What is the Extra DRS Boost chip?
+Play this chip to choose one driver to get a huge 3x multiplier on their score for the next Grand Prix weekend. You can select any driver in your team but if your choice already has the regular 2x DRS Boost you’ll have to give that to another driver.
+
+What is the No Negative chip?
+Thinking of going for a risky strategy this week? Use the No Negative chip and if any of your team members score a negative you will limit your loss at zero points for that driver or constructor. New for this year, No Negative is applied per scoring category, not just the overall total for the driver or constructor. You will still be deducted points for making more than the permitted number of free transfers.
+
+What is the Wildcard chip?
+The Wildcard chip let’s you make an unlimited number of changes to your team – staying within the cost cap, of course. The chip will remain active until the next team-lock deadline so you can come back and tinker with your line-up throughout. The Wildcard chip is not available for your first race because there is already no limit to the transfers at that can be made. This chip is available after your team has completed one whole race weekend.
+
+What is the Limitless chip?
+Limitless is like a turbocharged Wildcard. Play this chip and not only do you get unlimited transfers, you also have no cost cap for this race! Splash the cash a pick all the top drivers and teams for the next race and forget about the price tag. Your original team will be restored after the race. This chip is available after your team has completed one whole race weekend. All transfers done in the raceweek where the limitless chip is applied are counted as unlimited transfers under the limitless chip and no free transfers shall be carried into the next race week.
+
+What is the Final Fix chip?
+Use the Final Fix chip and make a single change to your team between the end of Qualifying and the start of the Grand Prix. You will not incur a penalty if you’ve already used all of your free transfers. You will keep the points already earned by the driver you remove from your team and only score points for the incoming selection from the next track session (Sprint or Race) onwards. This chip is available after your team has completed one whole race weekend. You cannot change the DRS Boost allocation when playing your final fix chip, if the driver you remove has DRS Boost applied then the incoming driver will receive the 2x score for the next session. Your original team selection will be restored following the Race, with your Final Fix driver removed from the line-up.
+
+Inactive drivers – What happens if one of my drivers isn’t racing?
+If a driver is replaced, injured or otherwise not participating in Qualifying, the Sprint or the Grand Prix, they will get penalty points. To avoid penalties you can use the Final Fix chip to change your team before each session starts.
+
+New for 2025 :– the game will suggest a transfer of a similarly priced driver into your team. Choosing to accept the suggestion will be considered part of your transfer allowance – so if you’ve already maxed out your transfers, you will still receive a -10 point penalty.
