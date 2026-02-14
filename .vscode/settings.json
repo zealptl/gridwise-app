@@ -1,0 +1,49 @@
+{
+  // Python settings
+  "python.defaultInterpreterPath": "${workspaceFolder}/service/.venv/bin/python",
+  "python.envFile": "${workspaceFolder}/service/.env",
+
+  // Testing
+  "python.testing.pytestEnabled": true,
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestArgs": [
+    "service/tests",
+    "-v"
+  ],
+
+  // Linting & Formatting
+  "python.linting.enabled": true,
+  "python.linting.ruffEnabled": true,
+  "python.formatting.provider": "none",
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit",
+      "source.fixAll": "explicit"
+    }
+  },
+
+  // File associations
+  "files.associations": {
+    "*.json": "json",
+    "*.md": "markdown"
+  },
+
+  // Exclude from file watcher
+  "files.watcherExclude": {
+    "**/.venv/**": true,
+    "**/node_modules/**": true,
+    "**/.pytest_cache/**": true,
+    "**/__pycache__/**": true,
+    "**/.mypy_cache/**": true,
+    "**/.ruff_cache/**": true
+  },
+
+  // Terminal
+  "terminal.integrated.cwd": "${workspaceFolder}/service",
+
+  // Auto-complete
+  "python.analysis.autoImportCompletions": true,
+  "python.analysis.typeCheckingMode": "basic"
+}

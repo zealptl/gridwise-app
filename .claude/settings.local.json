@@ -6,7 +6,15 @@
       "Bash(uv run ruff:*)",
       "Bash(uv run mypy:*)",
       "Bash(uv run pytest:*)",
-      "Bash(timeout 5 uv run:*)"
+      "Bash(timeout 5 uv run:*)",
+      "Bash(source:*)",
+      "Bash(python scripts/seed_database.py:*)",
+      "Bash(docker exec:*)",
+      "Bash(pytest:*)",
+      "Bash(python -m pytest tests/test_api/test_drivers.py -v --tb=short)",
+      "Bash(python -m pytest:*)",
+      "Bash(python -m py_compile:*)",
+      "Bash(python scripts/generate_openapi.py:*)"
     ]
   }
 }

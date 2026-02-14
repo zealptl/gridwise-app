@@ -183,27 +183,6 @@ class AbstractRule(ABC):
         )
 ```
 
-### 4. `service/app/services/rules/budget_cap_rule.py`
-Full implementation as shown in the main plan.
-
-### 5. `service/app/services/rules/roster_size_rule.py`
-Full implementation as shown in the main plan.
-
-### 6. `service/app/services/rules/drs_boost_rule.py`
-Full implementation as shown in the main plan.
-
-### 7. `service/app/services/rules/max_teams_rule.py`
-Full implementation as shown in the main plan.
-
-### 8. `service/app/services/rules/transfer_limit_rule.py`
-Full implementation as shown in the main plan.
-
-### 9. `service/app/services/rules/driver_eligibility_rule.py`
-Full implementation as shown in the main plan.
-
-### 10. `service/app/services/rule_engine.py`
-Full RuleEngine orchestrator as shown in the main plan.
-
 ### 11. `service/app/routers/rules.py`
 ```python
 from fastapi import APIRouter, HTTPException, status

@@ -1,0 +1,160 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Start GridWise API",
+      "type": "shell",
+      "command": "source .venv/bin/activate && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000",
+      "options": {
+        "cwd": "${workspaceFolder}/service"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Run Tests",
+      "type": "shell",
+      "command": "source .venv/bin/activate && pytest tests/ -v",
+      "options": {
+        "cwd": "${workspaceFolder}/service"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      },
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Run Tests with Coverage",
+      "type": "shell",
+      "command": "source .venv/bin/activate && pytest tests/ -v --cov=app --cov-report=html",
+      "options": {
+        "cwd": "${workspaceFolder}/service"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Seed Database",
+      "type": "shell",
+      "command": "source .venv/bin/activate && python scripts/seed_database.py",
+      "options": {
+        "cwd": "${workspaceFolder}/service"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Explore Database",
+      "type": "shell",
+      "command": "source .venv/bin/activate && python scripts/explore_db.py",
+      "options": {
+        "cwd": "${workspaceFolder}/service"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Generate OpenAPI Spec",
+      "type": "shell",
+      "command": "source .venv/bin/activate && python scripts/generate_openapi.py",
+      "options": {
+        "cwd": "${workspaceFolder}/service"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    },
+    {
+      "label": "Format Code (Ruff)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && ruff format .",
+      "options": {
+        "cwd": "${workspaceFolder}/service"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "silent",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Lint Code (Ruff)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && ruff check . --fix",
+      "options": {
+        "cwd": "${workspaceFolder}/service"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Type Check (mypy)",
+      "type": "shell",
+      "command": "source .venv/bin/activate && mypy app/",
+      "options": {
+        "cwd": "${workspaceFolder}/service"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Start MongoDB (Docker)",
+      "type": "shell",
+      "command": "docker run -d -p 27017:27017 --name gridwise-mongo mongo:latest || docker start gridwise-mongo",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "Stop MongoDB (Docker)",
+      "type": "shell",
+      "command": "docker stop gridwise-mongo",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      }
+    },
+    {
+      "label": "MongoDB Shell",
+      "type": "shell",
+      "command": "docker exec -it gridwise-mongo mongosh gridwise_mvp",
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "new"
+      }
+    }
+  ]
+}
