@@ -1,8 +1,9 @@
 """Team Service - Business logic for team management"""
 
 from datetime import datetime
-from typing import List
+from typing import Dict, List
 
+from beanie.operators import In
 from fastapi import HTTPException, status
 
 from app.models.constructor import Constructor
@@ -11,11 +12,117 @@ from app.models.team import ConstructorSelection, DriverSelection, FantasyTeam, 
 from app.models.validation import TeamValidationResult
 from app.services.rule_engine import RuleEngine
 from app.services.transfer_service import TransferService
-from app.schemas.transfer import Change
 
 
 class TeamService:
     """Business logic for team management"""
+
+    async def _fetch_and_validate_drivers(
+        self, driver_ids: List[str]
+    ) -> List[DriverSelection]:
+        """
+        Fetch and validate multiple drivers in a single database query.
+
+        Args:
+            driver_ids: List of driver IDs to fetch
+
+        Returns:
+            List of DriverSelection objects
+
+        Raises:
+            HTTPException: If any driver not found or inactive
+        """
+        # Fetch all drivers in one query
+        drivers = await Driver.find(In(Driver.driver_id, driver_ids)).to_list()
+
+        # Create lookup dictionary for O(1) access
+        drivers_by_id = {driver.driver_id: driver for driver in drivers}
+
+        # Validate all drivers exist and are active
+        missing_ids = set(driver_ids) - set(drivers_by_id.keys())
+        if missing_ids:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Drivers not found: {', '.join(missing_ids)}",
+            )
+
+        # Check for inactive drivers
+        inactive_drivers = [
+            f"{d.first_name} {d.last_name}"
+            for d in drivers
+            if d.status != "active"
+        ]
+        if inactive_drivers:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Inactive drivers: {', '.join(inactive_drivers)}",
+            )
+
+        # Maintain original order and convert to DriverSelection
+        drivers_data = [
+            DriverSelection(
+                driver_id=driver_id,
+                driver_name=f"{drivers_by_id[driver_id].first_name} {drivers_by_id[driver_id].last_name}",
+                team_name=drivers_by_id[driver_id].team_name,
+                price=drivers_by_id[driver_id].price,
+            )
+            for driver_id in driver_ids
+        ]
+
+        return drivers_data
+
+    async def _fetch_and_validate_constructors(
+        self, constructor_ids: List[str]
+    ) -> List[ConstructorSelection]:
+        """
+        Fetch and validate multiple constructors in a single database query.
+
+        Args:
+            constructor_ids: List of constructor IDs to fetch
+
+        Returns:
+            List of ConstructorSelection objects
+
+        Raises:
+            HTTPException: If any constructor not found or inactive
+        """
+        # Fetch all constructors in one query
+        constructors = await Constructor.find(
+            In(Constructor.constructor_id, constructor_ids)
+        ).to_list()
+
+        # Create lookup dictionary for O(1) access
+        constructors_by_id = {c.constructor_id: c for c in constructors}
+
+        # Validate all constructors exist and are active
+        missing_ids = set(constructor_ids) - set(constructors_by_id.keys())
+        if missing_ids:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Constructors not found: {', '.join(missing_ids)}",
+            )
+
+        # Check for inactive constructors
+        inactive_constructors = [
+            c.name for c in constructors if c.status != "active"
+        ]
+        if inactive_constructors:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Inactive constructors: {', '.join(inactive_constructors)}",
+            )
+
+        # Maintain original order and convert to ConstructorSelection
+        constructors_data = [
+            ConstructorSelection(
+                constructor_id=constructor_id,
+                constructor_name=constructors_by_id[constructor_id].name,
+                price=constructors_by_id[constructor_id].price,
+            )
+            for constructor_id in constructor_ids
+        ]
+
+        return constructors_data
 
     async def create_team(
         self,
@@ -43,57 +150,11 @@ class TeamService:
         Raises:
             HTTPException: If validation fails or entities not found
         """
+        # Fetch and validate all drivers in one query
+        drivers_data = await self._fetch_and_validate_drivers(driver_ids)
 
-        # Fetch all drivers
-        drivers_data = []
-        for driver_id in driver_ids:
-            driver = await Driver.find_one(Driver.driver_id == driver_id)
-            if not driver:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Driver {driver_id} not found",
-                )
-
-            if driver.status != "active":
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Driver {driver.first_name} {driver.last_name} is not active",
-                )
-
-            drivers_data.append(
-                DriverSelection(
-                    driver_id=driver.driver_id,
-                    driver_name=f"{driver.first_name} {driver.last_name}",
-                    team_name=driver.team_name,
-                    price=driver.price,
-                )
-            )
-
-        # Fetch all constructors
-        constructors_data = []
-        for constructor_id in constructor_ids:
-            constructor = await Constructor.find_one(
-                Constructor.constructor_id == constructor_id
-            )
-            if not constructor:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Constructor {constructor_id} not found",
-                )
-
-            if constructor.status != "active":
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Constructor {constructor.name} is not active",
-                )
-
-            constructors_data.append(
-                ConstructorSelection(
-                    constructor_id=constructor.constructor_id,
-                    constructor_name=constructor.name,
-                    price=constructor.price,
-                )
-            )
+        # Fetch and validate all constructors in one query
+        constructors_data = await self._fetch_and_validate_constructors(constructor_ids)
 
         # Create team instance
         team = FantasyTeam(
@@ -232,55 +293,11 @@ class TeamService:
             available_transfers=team.available_transfers,
         )
 
-        # Step 5: Fetch new entity data from database
-        new_drivers_data = []
-        for driver_id in new_driver_ids:
-            driver = await Driver.find_one(Driver.driver_id == driver_id)
-            if not driver:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Driver {driver_id} not found",
-                )
-
-            if driver.status != "active":
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Driver {driver.first_name} {driver.last_name} is not active",
-                )
-
-            new_drivers_data.append(
-                DriverSelection(
-                    driver_id=driver.driver_id,
-                    driver_name=f"{driver.first_name} {driver.last_name}",
-                    team_name=driver.team_name,
-                    price=driver.price,
-                )
-            )
-
-        new_constructors_data = []
-        for constructor_id in new_constructor_ids:
-            constructor = await Constructor.find_one(
-                Constructor.constructor_id == constructor_id
-            )
-            if not constructor:
-                raise HTTPException(
-                    status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Constructor {constructor_id} not found",
-                )
-
-            if constructor.status != "active":
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Constructor {constructor.name} is not active",
-                )
-
-            new_constructors_data.append(
-                ConstructorSelection(
-                    constructor_id=constructor.constructor_id,
-                    constructor_name=constructor.name,
-                    price=constructor.price,
-                )
-            )
+        # Step 5: Fetch new entity data from database in bulk
+        new_drivers_data = await self._fetch_and_validate_drivers(new_driver_ids)
+        new_constructors_data = await self._fetch_and_validate_constructors(
+            new_constructor_ids
+        )
 
         # Step 6: Update team composition
         team.drivers = new_drivers_data
@@ -316,61 +333,81 @@ class TeamService:
 
         # Step 9: Record transfer history (only if transfers were made)
         if transfer_count > 0:
+            # Fetch all changed entities in bulk for transfer history
+            all_changed_driver_ids = changes.drivers_removed + changes.drivers_added
+            all_changed_constructor_ids = (
+                changes.constructors_removed + changes.constructors_added
+            )
+
+            # Fetch drivers and constructors in bulk
+            driver_lookup: Dict[str, Driver] = {}
+            if all_changed_driver_ids:
+                changed_drivers = await Driver.find(
+                    In(Driver.driver_id, all_changed_driver_ids)
+                ).to_list()
+                driver_lookup = {d.driver_id: d for d in changed_drivers}
+
+            constructor_lookup: Dict[str, Constructor] = {}
+            if all_changed_constructor_ids:
+                changed_constructors = await Constructor.find(
+                    In(Constructor.constructor_id, all_changed_constructor_ids)
+                ).to_list()
+                constructor_lookup = {c.constructor_id: c for c in changed_constructors}
+
             # Build list of changes with details
             change_list = []
 
             # Drivers removed
             for driver_id in changes.drivers_removed:
-                old_driver = next(
-                    (d for d in [DriverSelection(driver_id=d.driver_id, driver_name=d.driver_name, team_name=d.team_name, price=d.price) for d in [dr for dr in [d for d in team.drivers if d.driver_id == driver_id]]] if True),
-                    None
-                )
-                # Find from old team data
-                for old_d in [d for d in old_driver_ids]:
-                    if old_d == driver_id:
-                        # Fetch driver details
-                        driver = await Driver.find_one(Driver.driver_id == driver_id)
-                        if driver:
-                            change_list.append({
-                                "type": "driver_out",
-                                "entity_id": driver_id,
-                                "entity_name": f"{driver.first_name} {driver.last_name}",
-                                "price": driver.price,
-                            })
-                        break
+                if driver_id in driver_lookup:
+                    driver = driver_lookup[driver_id]
+                    change_list.append(
+                        {
+                            "type": "driver_out",
+                            "entity_id": driver_id,
+                            "entity_name": f"{driver.first_name} {driver.last_name}",
+                            "price": driver.price,
+                        }
+                    )
 
             # Drivers added
             for driver_id in changes.drivers_added:
-                driver = await Driver.find_one(Driver.driver_id == driver_id)
-                if driver:
-                    change_list.append({
-                        "type": "driver_in",
-                        "entity_id": driver_id,
-                        "entity_name": f"{driver.first_name} {driver.last_name}",
-                        "price": driver.price,
-                    })
+                if driver_id in driver_lookup:
+                    driver = driver_lookup[driver_id]
+                    change_list.append(
+                        {
+                            "type": "driver_in",
+                            "entity_id": driver_id,
+                            "entity_name": f"{driver.first_name} {driver.last_name}",
+                            "price": driver.price,
+                        }
+                    )
 
             # Constructors removed
             for constructor_id in changes.constructors_removed:
-                constructor = await Constructor.find_one(Constructor.constructor_id == constructor_id)
-                if constructor:
-                    change_list.append({
-                        "type": "constructor_out",
-                        "entity_id": constructor_id,
-                        "entity_name": constructor.name,
-                        "price": constructor.price,
-                    })
+                if constructor_id in constructor_lookup:
+                    constructor = constructor_lookup[constructor_id]
+                    change_list.append(
+                        {
+                            "type": "constructor_out",
+                            "entity_id": constructor_id,
+                            "entity_name": constructor.name,
+                            "price": constructor.price,
+                        }
+                    )
 
             # Constructors added
             for constructor_id in changes.constructors_added:
-                constructor = await Constructor.find_one(Constructor.constructor_id == constructor_id)
-                if constructor:
-                    change_list.append({
-                        "type": "constructor_in",
-                        "entity_id": constructor_id,
-                        "entity_name": constructor.name,
-                        "price": constructor.price,
-                    })
+                if constructor_id in constructor_lookup:
+                    constructor = constructor_lookup[constructor_id]
+                    change_list.append(
+                        {
+                            "type": "constructor_in",
+                            "entity_id": constructor_id,
+                            "entity_name": constructor.name,
+                            "price": constructor.price,
+                        }
+                    )
 
             transfer_record = TransferRecord(
                 race_id=None,  # None for MVP
