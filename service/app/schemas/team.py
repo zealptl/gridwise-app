@@ -5,7 +5,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, field_validator
 
-from app.models.team import DriverSelection, ConstructorSelection
+from app.models.team import DriverSelection, ConstructorSelection, TransferRecord
 
 
 class DriverSelectionInput(BaseModel):
@@ -55,6 +55,39 @@ class TeamCreate(BaseModel):
         return v
 
 
+class TeamUpdate(BaseModel):
+    """Team update request schema"""
+
+    driver_ids: List[str]  # Exactly 5
+    constructor_ids: List[str]  # Exactly 2
+    drs_boost_driver_id: str
+
+    @field_validator("driver_ids")
+    @classmethod
+    def validate_driver_count(cls, v):
+        if len(v) != 5:
+            raise ValueError("Must select exactly 5 drivers")
+        if len(set(v)) != 5:
+            raise ValueError("All drivers must be unique")
+        return v
+
+    @field_validator("constructor_ids")
+    @classmethod
+    def validate_constructor_count(cls, v):
+        if len(v) != 2:
+            raise ValueError("Must select exactly 2 constructors")
+        if len(set(v)) != 2:
+            raise ValueError("All constructors must be unique")
+        return v
+
+    @field_validator("drs_boost_driver_id")
+    @classmethod
+    def validate_drs_boost(cls, v, info):
+        if "driver_ids" in info.data and v not in info.data["driver_ids"]:
+            raise ValueError("DRS Boost must be assigned to one of the selected drivers")
+        return v
+
+
 class TeamResponse(BaseModel):
     """Team response schema"""
 
@@ -70,8 +103,38 @@ class TeamResponse(BaseModel):
     budget_remaining: float
     is_valid: bool
     validation_errors: List[dict]
+    transfer_history: List[TransferRecord] = []
+    current_race_transfers: int = 0
+    available_transfers: int = 2
     created_at: datetime
     updated_at: datetime
 
     class Config:
         from_attributes = True
+
+
+class TeamSummary(BaseModel):
+    """Team summary for list view (lighter response)"""
+
+    team_id: str
+    team_name: str
+    season: int
+    budget_used: float
+    budget_remaining: float
+    is_valid: bool
+    driver_count: int
+    constructor_count: int
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class PaginatedTeamsResponse(BaseModel):
+    """Paginated teams list response"""
+
+    total: int
+    skip: int
+    limit: int
+    teams: List[TeamSummary]
