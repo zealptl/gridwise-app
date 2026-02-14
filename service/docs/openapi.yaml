@@ -1,0 +1,1162 @@
+openapi: 3.1.0
+info:
+  title: GridWise API
+  version: 0.1.0
+paths:
+  /api/v1/drivers/:
+    get:
+      tags:
+      - drivers
+      summary: Get All Drivers
+      description: Get all drivers with optional filters
+      operationId: get_all_drivers_api_v1_drivers__get
+      parameters:
+      - name: team_name
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Team Name
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            pattern: ^(active|inactive|reserve)$
+          - type: 'null'
+          title: Status
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Skip
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 100
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DriverResponse'
+                title: Response Get All Drivers Api V1 Drivers  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - drivers
+      summary: Create Driver
+      description: Create a new driver
+      operationId: create_driver_api_v1_drivers__post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/drivers/{driver_id}:
+    get:
+      tags:
+      - drivers
+      summary: Get Driver
+      description: Get a specific driver by ID
+      operationId: get_driver_api_v1_drivers__driver_id__get
+      parameters:
+      - name: driver_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Driver Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - drivers
+      summary: Update Driver
+      description: Update an existing driver
+      operationId: update_driver_api_v1_drivers__driver_id__put
+      parameters:
+      - name: driver_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Driver Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DriverResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - drivers
+      summary: Delete Driver
+      description: Delete a driver (soft delete by setting status=inactive)
+      operationId: delete_driver_api_v1_drivers__driver_id__delete
+      parameters:
+      - name: driver_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Driver Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/drivers/team/{team_name}:
+    get:
+      tags:
+      - drivers
+      summary: Get Drivers By Team
+      description: Get all drivers for a specific team
+      operationId: get_drivers_by_team_api_v1_drivers_team__team_name__get
+      parameters:
+      - name: team_name
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Team Name
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DriverResponse'
+                title: Response Get Drivers By Team Api V1 Drivers Team  Team Name  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/constructors/:
+    get:
+      tags:
+      - constructors
+      summary: Get All Constructors
+      description: Get all constructors with optional filters
+      operationId: get_all_constructors_api_v1_constructors__get
+      parameters:
+      - name: status
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: string
+            pattern: ^(active|inactive)$
+          - type: 'null'
+          title: Status
+      - name: skip
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 0
+          title: Skip
+      - name: limit
+        in: query
+        required: false
+        schema:
+          type: integer
+          default: 100
+          title: Limit
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ConstructorResponse'
+                title: Response Get All Constructors Api V1 Constructors  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - constructors
+      summary: Create Constructor
+      description: Create a new constructor
+      operationId: create_constructor_api_v1_constructors__post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConstructorCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConstructorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/constructors/{constructor_id}:
+    get:
+      tags:
+      - constructors
+      summary: Get Constructor
+      description: Get a specific constructor by ID
+      operationId: get_constructor_api_v1_constructors__constructor_id__get
+      parameters:
+      - name: constructor_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Constructor Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConstructorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - constructors
+      summary: Update Constructor
+      description: Update an existing constructor
+      operationId: update_constructor_api_v1_constructors__constructor_id__put
+      parameters:
+      - name: constructor_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Constructor Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ConstructorUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ConstructorResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - constructors
+      summary: Delete Constructor
+      description: Delete a constructor (soft delete by setting status=inactive)
+      operationId: delete_constructor_api_v1_constructors__constructor_id__delete
+      parameters:
+      - name: constructor_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Constructor Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/rules/:
+    get:
+      tags:
+      - rules
+      summary: Get All Rules
+      description: "Get all rules with optional filters.\n\nArgs:\n    is_active:\
+        \ Filter by active status\n    rule_type: Filter by rule type\n\nReturns:\n\
+        \    List of rules"
+      operationId: get_all_rules_api_v1_rules__get
+      parameters:
+      - name: is_active
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Active
+      - name: rule_type
+        in: query
+        required: false
+        schema:
+          anyOf:
+          - $ref: '#/components/schemas/RuleType'
+          - type: 'null'
+          title: Rule Type
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RuleResponse'
+                title: Response Get All Rules Api V1 Rules  Get
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    post:
+      tags:
+      - rules
+      summary: Create Rule
+      description: "Create a new rule.\n\nArgs:\n    rule_data: Rule creation data\n\
+        \nReturns:\n    Created rule\n\nRaises:\n    400: Invalid rule data"
+      operationId: create_rule_api_v1_rules__post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleCreate'
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/rules/{rule_id}:
+    get:
+      tags:
+      - rules
+      summary: Get Rule
+      description: "Get a specific rule by ID.\n\nArgs:\n    rule_id: Rule ID\n\n\
+        Returns:\n    Rule details\n\nRaises:\n    404: Rule not found"
+      operationId: get_rule_api_v1_rules__rule_id__get
+      parameters:
+      - name: rule_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Rule Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - rules
+      summary: Update Rule
+      description: "Update an existing rule.\n\nArgs:\n    rule_id: Rule ID\n    rule_data:\
+        \ Rule update data\n\nReturns:\n    Updated rule\n\nRaises:\n    404: Rule\
+        \ not found"
+      operationId: update_rule_api_v1_rules__rule_id__put
+      parameters:
+      - name: rule_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Rule Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RuleUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+    delete:
+      tags:
+      - rules
+      summary: Delete Rule
+      description: "Delete a rule (soft delete by setting is_active=False).\n\nArgs:\n\
+        \    rule_id: Rule ID\n\nRaises:\n    404: Rule not found"
+      operationId: delete_rule_api_v1_rules__rule_id__delete
+      parameters:
+      - name: rule_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Rule Id
+      responses:
+        '204':
+          description: Successful Response
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/rules/{rule_id}/toggle:
+    patch:
+      tags:
+      - rules
+      summary: Toggle Rule
+      description: "Toggle rule active status.\n\nArgs:\n    rule_id: Rule ID\n\n\
+        Returns:\n    Updated rule\n\nRaises:\n    404: Rule not found"
+      operationId: toggle_rule_api_v1_rules__rule_id__toggle_patch
+      parameters:
+      - name: rule_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Rule Id
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RuleResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /api/v1/teams/:
+    post:
+      tags:
+      - teams
+      summary: Create Team
+      description: 'Create a new fantasy team.
+
+
+        Validates:
+
+        - Exactly 5 drivers selected
+
+        - Exactly 2 constructors selected
+
+        - All entities are active
+
+        - Budget cap not exceeded
+
+        - DRS Boost assigned to one driver
+
+        - All F1 Fantasy rules pass
+
+
+        Returns the created team with validation status.'
+      operationId: create_team_api_v1_teams__post
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamCreate'
+        required: true
+      responses:
+        '201':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
+  /health:
+    get:
+      summary: Health Check
+      description: Health check endpoint
+      operationId: health_check_health_get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+  /:
+    get:
+      summary: Root
+      description: Root endpoint
+      operationId: root__get
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema: {}
+components:
+  schemas:
+    ConstructorCreate:
+      properties:
+        name:
+          type: string
+          title: Name
+        full_name:
+          type: string
+          title: Full Name
+        nationality:
+          type: string
+          title: Nationality
+        price:
+          type: number
+          title: Price
+        status:
+          type: string
+          title: Status
+          default: active
+      type: object
+      required:
+      - name
+      - full_name
+      - nationality
+      - price
+      title: ConstructorCreate
+    ConstructorResponse:
+      properties:
+        name:
+          type: string
+          title: Name
+        full_name:
+          type: string
+          title: Full Name
+        nationality:
+          type: string
+          title: Nationality
+        price:
+          type: number
+          title: Price
+        status:
+          type: string
+          title: Status
+          default: active
+        constructor_id:
+          type: string
+          title: Constructor Id
+        price_history:
+          items:
+            $ref: '#/components/schemas/PriceHistory'
+          type: array
+          title: Price History
+          default: []
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - name
+      - full_name
+      - nationality
+      - price
+      - constructor_id
+      - created_at
+      - updated_at
+      title: ConstructorResponse
+    ConstructorUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        full_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Full Name
+        nationality:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nationality
+        price:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Price
+        status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      type: object
+      title: ConstructorUpdate
+    DriverCreate:
+      properties:
+        first_name:
+          type: string
+          title: First Name
+        last_name:
+          type: string
+          title: Last Name
+        team_name:
+          type: string
+          title: Team Name
+        nationality:
+          type: string
+          title: Nationality
+        driver_number:
+          type: integer
+          title: Driver Number
+        price:
+          type: number
+          title: Price
+        status:
+          type: string
+          title: Status
+          default: active
+      type: object
+      required:
+      - first_name
+      - last_name
+      - team_name
+      - nationality
+      - driver_number
+      - price
+      title: DriverCreate
+    DriverResponse:
+      properties:
+        first_name:
+          type: string
+          title: First Name
+        last_name:
+          type: string
+          title: Last Name
+        team_name:
+          type: string
+          title: Team Name
+        nationality:
+          type: string
+          title: Nationality
+        driver_number:
+          type: integer
+          title: Driver Number
+        price:
+          type: number
+          title: Price
+        status:
+          type: string
+          title: Status
+          default: active
+        driver_id:
+          type: string
+          title: Driver Id
+        price_history:
+          items:
+            $ref: '#/components/schemas/PriceHistory'
+          type: array
+          title: Price History
+          default: []
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - first_name
+      - last_name
+      - team_name
+      - nationality
+      - driver_number
+      - price
+      - driver_id
+      - created_at
+      - updated_at
+      title: DriverResponse
+    DriverUpdate:
+      properties:
+        first_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: First Name
+        last_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Last Name
+        team_name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Team Name
+        nationality:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Nationality
+        driver_number:
+          anyOf:
+          - type: integer
+          - type: 'null'
+          title: Driver Number
+        price:
+          anyOf:
+          - type: number
+          - type: 'null'
+          title: Price
+        status:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Status
+      type: object
+      title: DriverUpdate
+    HTTPValidationError:
+      properties:
+        detail:
+          items:
+            $ref: '#/components/schemas/ValidationError'
+          type: array
+          title: Detail
+      type: object
+      title: HTTPValidationError
+    PriceHistory:
+      properties:
+        price:
+          type: number
+          title: Price
+        changed_at:
+          type: string
+          format: date-time
+          title: Changed At
+        changed_by:
+          type: string
+          title: Changed By
+          default: system
+      type: object
+      required:
+      - price
+      - changed_at
+      title: PriceHistory
+    RuleCreate:
+      properties:
+        rule_type:
+          $ref: '#/components/schemas/RuleType'
+        name:
+          type: string
+          title: Name
+        description:
+          type: string
+          title: Description
+        config:
+          additionalProperties: true
+          type: object
+          title: Config
+        validation_logic:
+          $ref: '#/components/schemas/ValidationLogic'
+        severity:
+          $ref: '#/components/schemas/RuleSeverity'
+          default: error
+        applies_to:
+          type: string
+          title: Applies To
+        is_active:
+          type: boolean
+          title: Is Active
+          default: true
+      type: object
+      required:
+      - rule_type
+      - name
+      - description
+      - config
+      - validation_logic
+      - applies_to
+      title: RuleCreate
+      description: Schema for creating a rule
+    RuleResponse:
+      properties:
+        rule_type:
+          $ref: '#/components/schemas/RuleType'
+        name:
+          type: string
+          title: Name
+        description:
+          type: string
+          title: Description
+        config:
+          additionalProperties: true
+          type: object
+          title: Config
+        validation_logic:
+          $ref: '#/components/schemas/ValidationLogic'
+        severity:
+          $ref: '#/components/schemas/RuleSeverity'
+          default: error
+        applies_to:
+          type: string
+          title: Applies To
+        rule_id:
+          type: string
+          title: Rule Id
+        is_active:
+          type: boolean
+          title: Is Active
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+        created_by:
+          type: string
+          title: Created By
+        effective_from:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Effective From
+        effective_until:
+          anyOf:
+          - type: string
+            format: date-time
+          - type: 'null'
+          title: Effective Until
+      type: object
+      required:
+      - rule_type
+      - name
+      - description
+      - config
+      - validation_logic
+      - applies_to
+      - rule_id
+      - is_active
+      - created_at
+      - updated_at
+      - created_by
+      title: RuleResponse
+      description: Schema for rule response
+    RuleSeverity:
+      type: string
+      enum:
+      - error
+      - warning
+      - info
+      title: RuleSeverity
+      description: Rule severity enumeration
+    RuleType:
+      type: string
+      enum:
+      - budget_cap
+      - roster_size
+      - drs_boost_required
+      - max_teams_per_user
+      - transfer_limit
+      - driver_eligibility
+      title: RuleType
+      description: Rule type enumeration
+    RuleUpdate:
+      properties:
+        name:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Name
+        description:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Description
+        config:
+          anyOf:
+          - additionalProperties: true
+            type: object
+          - type: 'null'
+          title: Config
+        validation_logic:
+          anyOf:
+          - $ref: '#/components/schemas/ValidationLogic'
+          - type: 'null'
+        severity:
+          anyOf:
+          - $ref: '#/components/schemas/RuleSeverity'
+          - type: 'null'
+        is_active:
+          anyOf:
+          - type: boolean
+          - type: 'null'
+          title: Is Active
+      type: object
+      title: RuleUpdate
+      description: Schema for updating a rule
+    TeamCreate:
+      properties:
+        team_name:
+          type: string
+          title: Team Name
+        driver_ids:
+          items:
+            type: string
+          type: array
+          title: Driver Ids
+        constructor_ids:
+          items:
+            type: string
+          type: array
+          title: Constructor Ids
+        drs_boost_driver_id:
+          type: string
+          title: Drs Boost Driver Id
+        season:
+          type: integer
+          title: Season
+          default: 2026
+      type: object
+      required:
+      - team_name
+      - driver_ids
+      - constructor_ids
+      - drs_boost_driver_id
+      title: TeamCreate
+      description: Team creation request schema
+    TeamResponse:
+      properties:
+        team_id:
+          type: string
+          title: Team Id
+        team_name:
+          type: string
+          title: Team Name
+        created_by:
+          type: string
+          title: Created By
+        season:
+          type: integer
+          title: Season
+        drivers:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Drivers
+        constructors:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Constructors
+        drs_boost_driver_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Drs Boost Driver Id
+        budget_cap:
+          type: number
+          title: Budget Cap
+        budget_used:
+          type: number
+          title: Budget Used
+        budget_remaining:
+          type: number
+          title: Budget Remaining
+        is_valid:
+          type: boolean
+          title: Is Valid
+        validation_errors:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Validation Errors
+        created_at:
+          type: string
+          format: date-time
+          title: Created At
+        updated_at:
+          type: string
+          format: date-time
+          title: Updated At
+      type: object
+      required:
+      - team_id
+      - team_name
+      - created_by
+      - season
+      - drivers
+      - constructors
+      - drs_boost_driver_id
+      - budget_cap
+      - budget_used
+      - budget_remaining
+      - is_valid
+      - validation_errors
+      - created_at
+      - updated_at
+      title: TeamResponse
+      description: Team response schema
+    ValidationError:
+      properties:
+        loc:
+          items:
+            anyOf:
+            - type: string
+            - type: integer
+          type: array
+          title: Location
+        msg:
+          type: string
+          title: Message
+        type:
+          type: string
+          title: Error Type
+        input:
+          title: Input
+        ctx:
+          type: object
+          title: Context
+      type: object
+      required:
+      - loc
+      - msg
+      - type
+      title: ValidationError
+    ValidationLogic:
+      properties:
+        operator:
+          type: string
+          title: Operator
+        field:
+          type: string
+          title: Field
+        threshold:
+          type: string
+          title: Threshold
+        error_message_template:
+          type: string
+          title: Error Message Template
+        function:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Function
+      type: object
+      required:
+      - operator
+      - field
+      - threshold
+      - error_message_template
+      title: ValidationLogic
+      description: Validation logic configuration

@@ -7,6 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import settings
 from app.database import close_mongo_connection, connect_to_mongo
+from app.routers import constructors, drivers, rules, teams
 
 
 @asynccontextmanager
@@ -36,6 +37,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Include routers
+app.include_router(drivers.router, prefix=settings.API_V1_PREFIX)
+app.include_router(constructors.router, prefix=settings.API_V1_PREFIX)
+app.include_router(rules.router, prefix=settings.API_V1_PREFIX)
+app.include_router(teams.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/health")

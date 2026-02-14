@@ -1,8 +1,42 @@
 """Pytest Configuration and Fixtures"""
 import pytest
+import pytest_asyncio
 from httpx import AsyncClient
+from motor.motor_asyncio import AsyncIOMotorClient
 
+from app.config import settings
 from app.main import app
+from app.models.constructor import Constructor
+from app.models.driver import Driver
+from app.models.rule import Rule
+from app.models.team import FantasyTeam
+from app.models.user import User
+
+
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def initialize_database():
+    """Initialize database connection for tests"""
+    from beanie import init_beanie
+
+    # Create MongoDB client
+    client = AsyncIOMotorClient(settings.MONGODB_URL)
+
+    # Initialize Beanie with document models
+    await init_beanie(
+        database=client[settings.MONGODB_DB_NAME],
+        document_models=[
+            Driver,
+            Constructor,
+            Rule,
+            FantasyTeam,
+            User,
+        ],
+    )
+
+    yield
+
+    # Cleanup: close connection after test
+    client.close()
 
 
 @pytest.fixture

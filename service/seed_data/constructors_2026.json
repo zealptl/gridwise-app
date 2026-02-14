@@ -1,0 +1,72 @@
+[
+  {
+    "name": "Red Bull",
+    "full_name": "Oracle Red Bull Racing",
+    "nationality": "Austrian",
+    "price": 28.0,
+    "status": "active"
+  },
+  {
+    "name": "Ferrari",
+    "full_name": "Scuderia Ferrari",
+    "nationality": "Italian",
+    "price": 26.5,
+    "status": "active"
+  },
+  {
+    "name": "Mercedes",
+    "full_name": "Mercedes-AMG Petronas F1 Team",
+    "nationality": "German",
+    "price": 25.0,
+    "status": "active"
+  },
+  {
+    "name": "McLaren",
+    "full_name": "McLaren Formula 1 Team",
+    "nationality": "British",
+    "price": 23.5,
+    "status": "active"
+  },
+  {
+    "name": "Aston Martin",
+    "full_name": "Aston Martin Aramco F1 Team",
+    "nationality": "British",
+    "price": 21.0,
+    "status": "active"
+  },
+  {
+    "name": "Alpine",
+    "full_name": "BWT Alpine F1 Team",
+    "nationality": "French",
+    "price": 18.5,
+    "status": "active"
+  },
+  {
+    "name": "Williams",
+    "full_name": "Williams Racing",
+    "nationality": "British",
+    "price": 16.0,
+    "status": "active"
+  },
+  {
+    "name": "RB",
+    "full_name": "Visa Cash App RB F1 Team",
+    "nationality": "Italian",
+    "price": 15.5,
+    "status": "active"
+  },
+  {
+    "name": "Kick Sauber",
+    "full_name": "Stake F1 Team Kick Sauber",
+    "nationality": "Swiss",
+    "price": 14.0,
+    "status": "active"
+  },
+  {
+    "name": "Haas",
+    "full_name": "MoneyGram Haas F1 Team",
+    "nationality": "American",
+    "price": 15.0,
+    "status": "active"
+  }
+]

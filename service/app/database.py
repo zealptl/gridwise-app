@@ -20,14 +20,26 @@ db = Database()
 async def connect_to_mongo():
     """Connect to MongoDB and initialize Beanie ODM"""
     try:
+        # Import models here to avoid circular imports
+        from app.models.constructor import Constructor
+        from app.models.driver import Driver
+        from app.models.rule import Rule
+        from app.models.team import FantasyTeam
+        from app.models.user import User
+
         # Create MongoDB client
         db.client = AsyncIOMotorClient(settings.MONGODB_URL)
 
         # Initialize Beanie with document models
-        # Note: Models will be added in Phase 1.1
         await init_beanie(
             database=db.client[settings.MONGODB_DB_NAME],
-            document_models=[],  # Will add models later
+            document_models=[
+                Driver,
+                Constructor,
+                Rule,
+                FantasyTeam,
+                User,
+            ],
         )
 
         print(f"Connected to MongoDB at {settings.MONGODB_URL}")

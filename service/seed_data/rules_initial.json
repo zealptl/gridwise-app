@@ -1,0 +1,127 @@
+[
+  {
+    "rule_type": "budget_cap",
+    "name": "Budget Cap Rule",
+    "description": "Total team cost must not exceed 100M budget cap",
+    "config": {
+      "max_budget": 100.0,
+      "currency": "M"
+    },
+    "validation_logic": {
+      "operator": "<=",
+      "field": "budget_used",
+      "threshold": "config.max_budget",
+      "error_message_template": "Budget exceeded: {budget_used}M / {max_budget}M"
+    },
+    "severity": "error",
+    "is_active": true,
+    "applies_to": "team"
+  },
+  {
+    "rule_type": "roster_size",
+    "name": "Driver Roster Size Rule",
+    "description": "Team must have exactly 5 drivers",
+    "config": {
+      "required_drivers": 5,
+      "min_drivers": 5,
+      "max_drivers": 5
+    },
+    "validation_logic": {
+      "operator": "==",
+      "field": "len(drivers)",
+      "threshold": "config.required_drivers",
+      "error_message_template": "Invalid driver count: {actual} drivers (required: {required})"
+    },
+    "severity": "error",
+    "is_active": true,
+    "applies_to": "team"
+  },
+  {
+    "rule_type": "roster_size",
+    "name": "Constructor Roster Size Rule",
+    "description": "Team must have exactly 2 constructors",
+    "config": {
+      "required_constructors": 2,
+      "min_constructors": 2,
+      "max_constructors": 2
+    },
+    "validation_logic": {
+      "operator": "==",
+      "field": "len(constructors)",
+      "threshold": "config.required_constructors",
+      "error_message_template": "Invalid constructor count: {actual} constructors (required: {required})"
+    },
+    "severity": "error",
+    "is_active": true,
+    "applies_to": "team"
+  },
+  {
+    "rule_type": "drs_boost_required",
+    "name": "DRS Boost Assignment Rule",
+    "description": "DRS Boost must be assigned to one of the selected drivers",
+    "config": {
+      "required": true
+    },
+    "validation_logic": {
+      "operator": "in",
+      "field": "drs_boost_driver_id",
+      "threshold": "driver_ids",
+      "error_message_template": "DRS Boost must be assigned to one of your selected drivers"
+    },
+    "severity": "error",
+    "is_active": true,
+    "applies_to": "team"
+  },
+  {
+    "rule_type": "max_teams_per_user",
+    "name": "Maximum Teams Per User Rule",
+    "description": "User can create a maximum of 5 active teams per season",
+    "config": {
+      "max_teams": 5
+    },
+    "validation_logic": {
+      "operator": "<=",
+      "field": "active_team_count",
+      "threshold": "config.max_teams",
+      "error_message_template": "Maximum team limit reached: {actual} / {max_teams} teams"
+    },
+    "severity": "error",
+    "is_active": true,
+    "applies_to": "user"
+  },
+  {
+    "rule_type": "transfer_limit",
+    "name": "Transfer Limit Rule",
+    "description": "Teams have 2 free transfers per race weekend, additional transfers incur penalties",
+    "config": {
+      "free_transfers_per_race": 2,
+      "penalty_points_per_transfer": 4
+    },
+    "validation_logic": {
+      "operator": "<=",
+      "field": "transfers_this_race",
+      "threshold": "config.free_transfers_per_race",
+      "error_message_template": "Free transfer limit exceeded: {transfers_this_race} / {free_transfers_per_race} (Penalty: {penalty_points} points)"
+    },
+    "severity": "warning",
+    "is_active": true,
+    "applies_to": "team"
+  },
+  {
+    "rule_type": "driver_eligibility",
+    "name": "Driver Eligibility Rule",
+    "description": "Only active drivers can be selected for fantasy teams",
+    "config": {
+      "allowed_statuses": ["active"]
+    },
+    "validation_logic": {
+      "operator": "in",
+      "field": "driver.status",
+      "threshold": "config.allowed_statuses",
+      "error_message_template": "Driver {driver_name} is not eligible (status: {status})"
+    },
+    "severity": "error",
+    "is_active": true,
+    "applies_to": "driver"
+  }
+]
