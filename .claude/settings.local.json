@@ -14,7 +14,9 @@
       "Bash(python -m pytest tests/test_api/test_drivers.py -v --tb=short)",
       "Bash(python -m pytest:*)",
       "Bash(python -m py_compile:*)",
-      "Bash(python scripts/generate_openapi.py:*)"
+      "Bash(python scripts/generate_openapi.py:*)",
+      "Bash(.venv/bin/python -m pytest:*)",
+      "Bash(.venv/bin/python:*)"
     ]
   }
 }

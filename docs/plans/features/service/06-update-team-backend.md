@@ -532,20 +532,20 @@ Scenario 6: 5 transfers (3 excess, "wildcard")
 
 ## Verification Checklist
 
-- [ ] PUT endpoint exists and routes correctly
-- [ ] Load existing team or return 404
-- [ ] Calculate changes accurately (set difference)
-- [ ] Count transfers correctly (excludes DRS changes)
-- [ ] Calculate penalty correctly (formula verified)
-- [ ] Fetch new driver/constructor data
-- [ ] Update team composition
-- [ ] Recalculate budget
-- [ ] Re-validate team
-- [ ] Record transfer history
-- [ ] Handle validation failures (422)
-- [ ] Return updated team on success
-- [ ] All unit tests pass
-- [ ] All integration tests pass
+- [x] PUT endpoint exists and routes correctly
+- [x] Load existing team or return 404
+- [x] Calculate changes accurately (set difference)
+- [x] Count transfers correctly (excludes DRS changes)
+- [x] Calculate penalty correctly (formula verified)
+- [x] Fetch new driver/constructor data
+- [x] Update team composition
+- [x] Recalculate budget
+- [x] Re-validate team
+- [x] Record transfer history
+- [x] Handle validation failures (422)
+- [x] Return updated team on success
+- [x] All unit tests pass (15/15 passing)
+- [x] All integration tests pass (11/11 passing)
 
 ---
 
