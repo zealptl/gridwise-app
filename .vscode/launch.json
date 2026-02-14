@@ -78,6 +78,33 @@
       "console": "integratedTerminal",
       "justMyCode": false,
       "envFile": "${workspaceFolder}/service/.env"
+    },
+    {
+      "name": "GridWise UI (Vite Dev Server)",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npm run dev",
+      "cwd": "${workspaceFolder}/app",
+      "serverReadyAction": {
+        "pattern": "Local:.+(https?://localhost:[0-9]+)",
+        "uriFormat": "%s",
+        "action": "openExternally"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "GridWise Full Stack (API + UI)",
+      "configurations": [
+        "GridWise API (FastAPI)",
+        "GridWise UI (Vite Dev Server)"
+      ],
+      "presentation": {
+        "hidden": false,
+        "group": "fullstack",
+        "order": 1
+      },
+      "stopAll": true
     }
   ]
 }

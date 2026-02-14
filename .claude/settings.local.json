@@ -16,7 +16,10 @@
       "Bash(python -m py_compile:*)",
       "Bash(python scripts/generate_openapi.py:*)",
       "Bash(.venv/bin/python -m pytest:*)",
-      "Bash(.venv/bin/python:*)"
+      "Bash(.venv/bin/python:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(npm run dev:*)"
     ]
   }
 }
