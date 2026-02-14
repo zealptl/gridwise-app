@@ -1,0 +1,31 @@
+import { useEffect, useCallback } from 'react'
+import { teamsApi } from '@/api/teams'
+import { useTeamStore } from '@/stores/teamStore'
+
+export const useTeams = (filters?: {
+  season?: number
+  is_valid?: boolean
+  skip?: number
+  limit?: number
+}) => {
+  const { teams, setTeams, loading, setLoading, error, setError } = useTeamStore()
+
+  const fetchTeams = useCallback(async () => {
+    try {
+      setLoading(true)
+      setError(null)
+      const data = await teamsApi.getAll(filters)
+      setTeams(data.teams)
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Failed to fetch teams')
+    } finally {
+      setLoading(false)
+    }
+  }, [filters, setTeams, setLoading, setError])
+
+  useEffect(() => {
+    fetchTeams()
+  }, [fetchTeams])
+
+  return { teams, loading, error, refetch: fetchTeams }
+}
