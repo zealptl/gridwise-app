@@ -703,6 +703,46 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/HTTPValidationError'
+    put:
+      tags:
+      - teams
+      summary: Update Team
+      description: "Update an existing fantasy team with transfer tracking.\n\nTracks\
+        \ driver/constructor changes and calculates penalties:\n- Free transfers per\
+        \ race: 2\n- Penalty: -10 points per excess transfer\n- DRS Boost changes\
+        \ are free (don't count as transfers)\n\nValidates:\n- Exactly 5 drivers selected\n\
+        - Exactly 2 constructors selected\n- All entities are active\n- Budget cap\
+        \ not exceeded\n- DRS Boost assigned to one driver\n- All F1 Fantasy rules\
+        \ pass\n\nReturns the updated team with transfer history.\n\nRaises:\n   \
+        \ 404: Team not found\n    422: Validation failed (with detailed violation\
+        \ info)"
+      operationId: update_team_api_v1_teams__team_id__put
+      parameters:
+      - name: team_id
+        in: path
+        required: true
+        schema:
+          type: string
+          title: Team Id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamUpdate'
+      responses:
+        '200':
+          description: Successful Response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TeamResponse'
+        '422':
+          description: Validation Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HTTPValidationError'
   /health:
     get:
       summary: Health Check
@@ -1274,6 +1314,20 @@ components:
             type: object
           type: array
           title: Validation Errors
+        transfer_history:
+          items:
+            $ref: '#/components/schemas/TransferRecord'
+          type: array
+          title: Transfer History
+          default: []
+        current_race_transfers:
+          type: integer
+          title: Current Race Transfers
+          default: 0
+        available_transfers:
+          type: integer
+          title: Available Transfers
+          default: 2
         created_at:
           type: string
           format: date-time
@@ -1348,6 +1402,63 @@ components:
       - updated_at
       title: TeamSummary
       description: Team summary for list view (lighter response)
+    TeamUpdate:
+      properties:
+        driver_ids:
+          items:
+            type: string
+          type: array
+          title: Driver Ids
+        constructor_ids:
+          items:
+            type: string
+          type: array
+          title: Constructor Ids
+        drs_boost_driver_id:
+          type: string
+          title: Drs Boost Driver Id
+      type: object
+      required:
+      - driver_ids
+      - constructor_ids
+      - drs_boost_driver_id
+      title: TeamUpdate
+      description: Team update request schema
+    TransferRecord:
+      properties:
+        race_id:
+          anyOf:
+          - type: string
+          - type: 'null'
+          title: Race Id
+        transfers_used:
+          type: integer
+          title: Transfers Used
+        transfers_available:
+          type: integer
+          title: Transfers Available
+        penalty_points:
+          type: integer
+          title: Penalty Points
+        changes:
+          items:
+            additionalProperties: true
+            type: object
+          type: array
+          title: Changes
+        timestamp:
+          type: string
+          format: date-time
+          title: Timestamp
+      type: object
+      required:
+      - transfers_used
+      - transfers_available
+      - penalty_points
+      - changes
+      - timestamp
+      title: TransferRecord
+      description: Record of transfers made for a race
     ValidationError:
       properties:
         loc:
