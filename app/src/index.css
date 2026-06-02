@@ -24,6 +24,37 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
+
+    /* Semantic colors for team status */
+    --success-bg: 142 76% 96%;
+    --success-border: 142 76% 36%;
+    --success-text: 142 76% 26%;
+
+    --error-bg: 0 84% 96%;
+    --error-border: 0 84% 60%;
+    --error-text: 0 84% 40%;
+
+    /* Budget visualization */
+    --budget-safe: 142 76% 36%;
+    --budget-warning: 38 92% 50%;
+    --budget-danger: 0 84% 60%;
+
+    /* Rule Severity Colors */
+    --severity-error-bg: 0 84% 96%;
+    --severity-error-text: 0 84% 40%;
+    --severity-error-border: 0 84% 60%;
+
+    --severity-warning-bg: 38 92% 96%;
+    --severity-warning-text: 38 92% 40%;
+    --severity-warning-border: 38 92% 60%;
+
+    --severity-info-bg: 199 89% 96%;
+    --severity-info-text: 199 89% 40%;
+    --severity-info-border: 199 89% 60%;
+
+    /* Admin-Specific Colors */
+    --admin-header-bg: 220 14% 96%;
+    --admin-border: 220 13% 91%;
   }
 }
 
@@ -33,5 +64,70 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+/* Custom animations for premium UX */
+@layer utilities {
+  /* Fade in animation */
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Slide in from top */
+  @keyframes slide-in-from-top {
+    from {
+      transform: translateY(-0.5rem);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Animate in utility classes */
+  .animate-in {
+    animation-fill-mode: both;
+  }
+
+  .fade-in {
+    animation-name: fade-in;
+  }
+
+  .slide-in-from-top-2 {
+    animation-name: slide-in-from-top;
+  }
+
+  .duration-200 {
+    animation-duration: 200ms;
+  }
+
+  .duration-300 {
+    animation-duration: 300ms;
+  }
+
+  .duration-500 {
+    animation-duration: 500ms;
+  }
+
+  /* Smooth transitions for tabular numbers */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+    font-feature-settings: "tnum";
+  }
+}
+
+/* Respect prefers-reduced-motion */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

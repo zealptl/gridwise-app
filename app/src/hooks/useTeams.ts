@@ -9,19 +9,20 @@ export const useTeams = (filters?: {
   limit?: number
 }) => {
   const { teams, setTeams, loading, setLoading, error, setError } = useTeamStore()
+  const { season, is_valid, skip, limit } = filters ?? {}
 
   const fetchTeams = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
-      const data = await teamsApi.getAll(filters)
+      const data = await teamsApi.getAll({ season, is_valid, skip, limit })
       setTeams(data.teams)
     } catch (err: any) {
       setError(err.response?.data?.detail || 'Failed to fetch teams')
     } finally {
       setLoading(false)
     }
-  }, [filters, setTeams, setLoading, setError])
+  }, [season, is_valid, skip, limit, setTeams, setLoading, setError])
 
   useEffect(() => {
     fetchTeams()

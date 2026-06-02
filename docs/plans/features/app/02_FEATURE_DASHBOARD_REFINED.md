@@ -1,3 +1,4 @@
+
 # Feature: Dashboard - Team List View (Design-Refined)
 
 ## Overview

@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Layout } from '@/components/layout/Layout'
+// Temporarily disabled Toaster for debugging
+// import { Toaster } from '@/components/ui/toaster'
 import Dashboard from '@/pages/Dashboard'
 import TeamCreate from '@/pages/TeamCreate'
 import TeamDetail from '@/pages/TeamDetail'
@@ -18,6 +20,8 @@ function App() {
           <Route path="/admin/rules" element={<RulesAdmin />} />
         </Route>
       </Routes>
+      {/* Temporarily disabled for debugging */}
+      {/* <Toaster /> */}
     </BrowserRouter>
   )
 }
