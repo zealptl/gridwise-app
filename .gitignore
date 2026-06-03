@@ -1,4 +1,5 @@
 .env
+secrets.local.env
 .coverage
 node_modules
 .claude/
