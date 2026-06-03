@@ -10,9 +10,20 @@ const apiClient: AxiosInstance = axios.create({
   },
 })
 
-// Request interceptor
+// Inject JWT from auth store into every request
 apiClient.interceptors.request.use(
   config => {
+    try {
+      const stored = localStorage.getItem('gridwise-auth')
+      if (stored) {
+        const { state } = JSON.parse(stored)
+        if (state?.token) {
+          config.headers.Authorization = `Bearer ${state.token}`
+        }
+      }
+    } catch {
+      // ignore parse errors
+    }
     return config
   },
   error => Promise.reject(error)
