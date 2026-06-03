@@ -1,3 +1,37 @@
+## Implementation Workflow
+
+Each numbered task group (1, 2, 3, …) is an independent unit of work. Follow this process for every group:
+
+1. **Create a git worktree** for the task group:
+   ```bash
+   git worktree add ../gridwise-<group-slug> -b feat/<group-slug>
+   ```
+   Example: `git worktree add ../gridwise-cognito-tier -b feat/cognito-tier`
+
+2. **Implement all tasks in that group** inside the worktree.
+
+3. **No secrets in commits** — API keys, tokens, passwords, and credentials SHALL NOT appear in any committed file. Use AWS Secrets Manager (already provisioned in CDK) or SSM Parameter Store. If a file accidentally contains a secret, remove it before committing and rotate the credential immediately.
+
+4. **Commit to the feature branch** with a conventional commit message:
+   ```bash
+   git commit -m "feat: <short description of the task group>"
+   ```
+
+5. **Push and open a PR** targeting `main`:
+   ```bash
+   git push -u origin feat/<group-slug>
+   gh pr create --title "feat: <group name>" --base main
+   ```
+
+6. **Merge the PR** before starting the next task group. Task groups have dependencies — do not begin a downstream group until its upstream PR is merged and `main` is up to date.
+
+7. **Remove the worktree** after merge:
+   ```bash
+   git worktree remove ../gridwise-<group-slug>
+   ```
+
+---
+
 ## 1. Cognito Tier Attribute
 
 - [ ] 1.1 Add `custom:tier` custom attribute to Cognito user pool in `gridwise-agent-stack.ts` (string, mutable, allowed values: `free`, `premium`)
