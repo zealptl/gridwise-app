@@ -7,8 +7,9 @@ import logging
 import uuid
 from typing import AsyncGenerator
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Security
 from fastapi.responses import StreamingResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
 from app.auth import get_current_user
@@ -16,6 +17,13 @@ from app.auth import get_current_user
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/agent", tags=["agent"])
+
+_bearer = HTTPBearer()
+
+
+async def get_raw_jwt(credentials: HTTPAuthorizationCredentials = Security(_bearer)) -> str:
+    """Return the raw JWT string from the Authorization: Bearer header."""
+    return credentials.credentials
 
 
 # ---------------------------------------------------------------------------
@@ -60,13 +68,14 @@ class ChatRequest(BaseModel):
 async def chat_stream(
     request: ChatRequest,
     user_id: str = Depends(get_current_user),
+    raw_jwt: str = Depends(get_raw_jwt),
 ) -> StreamingResponse:
     """
     Streaming AG-UI endpoint for CopilotKit.
     Runs the ADK Runner and streams AG-UI events back as Server-Sent Events.
     """
     return StreamingResponse(
-        _stream_agent_response(request, user_id),
+        _stream_agent_response(request, user_id, raw_jwt),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
@@ -82,6 +91,7 @@ async def chat_stream(
 async def _stream_agent_response(
     request: ChatRequest,
     user_id: str,
+    user_jwt: str,
 ) -> AsyncGenerator[str, None]:
     """
     Stream AG-UI events from the ADK Runner.
@@ -98,7 +108,7 @@ async def _stream_agent_response(
         from google.adk.sessions import InMemorySessionService  # type: ignore
 
         # Build the agent graph
-        advisor = build_f1_advisor_graph()
+        advisor = build_f1_advisor_graph(user_jwt=user_jwt)
 
         # Set up session service and inject user_id into session state
         session_service = InMemorySessionService()
