@@ -2,8 +2,9 @@
 
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.auth import get_current_user
 from app.models.team import FantasyTeam
 from app.schemas.team import (
     PaginatedTeamsResponse,
@@ -14,7 +15,7 @@ from app.schemas.team import (
 )
 from app.services.team_service import TeamService
 
-router = APIRouter(prefix="/teams", tags=["teams"])
+router = APIRouter(prefix="/teams", tags=["teams"], dependencies=[Depends(get_current_user)])
 
 
 @router.post("/", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
