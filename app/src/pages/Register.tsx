@@ -2,10 +2,12 @@ import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { CognitoUserPool, CognitoUserAttribute } from 'amazon-cognito-identity-js'
 
-const userPool = new CognitoUserPool({
-  UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID ?? '',
-  ClientId: import.meta.env.VITE_COGNITO_APP_CLIENT_ID ?? '',
-})
+function getUserPool() {
+  return new CognitoUserPool({
+    UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID ?? '',
+    ClientId: import.meta.env.VITE_COGNITO_APP_CLIENT_ID ?? '',
+  })
+}
 
 export default function Register() {
   const navigate = useNavigate()
@@ -27,7 +29,7 @@ export default function Register() {
     setLoading(true)
     const attributes = [new CognitoUserAttribute({ Name: 'email', Value: email })]
 
-    userPool.signUp(email, password, attributes, [], (err) => {
+    getUserPool().signUp(email, password, attributes, [], (err) => {
       setLoading(false)
       if (err) {
         setError(err.message || 'Registration failed')
@@ -91,7 +93,7 @@ export default function Register() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-md !bg-blue-600 px-4 py-2 text-sm font-medium !text-white hover:!bg-blue-700 disabled:opacity-50"
           >
             {loading ? 'Creating account…' : 'Create account'}
           </button>

@@ -4,9 +4,20 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
+  define: {
+    global: 'globalThis',
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000',
+        changeOrigin: true,
+      },
     },
   },
   test: {

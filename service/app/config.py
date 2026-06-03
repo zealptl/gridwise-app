@@ -18,10 +18,18 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "GridWise API"
     VERSION: str = "0.1.0"
 
+    # Cognito settings
+    COGNITO_USER_POOL_ID: str = ""
+    COGNITO_APP_CLIENT_ID: str = ""
+    AWS_REGION: str = "us-east-1"
+    AUTH_BYPASS: bool = False
+
     # CORS settings
     BACKEND_CORS_ORIGINS: List[str] = [
-        "http://localhost:5173",
         "http://localhost:3000",
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
     ]
 
     @field_validator("BACKEND_CORS_ORIGINS", mode="before")

@@ -12,7 +12,7 @@ from app.schemas.rule import RuleCreate, RuleResponse, RuleUpdate
 router = APIRouter(prefix="/rules", tags=["rules"], dependencies=[Depends(get_current_user)])
 
 
-@router.get("/", response_model=List[RuleResponse])
+@router.get("", response_model=List[RuleResponse])
 async def get_all_rules(
     is_active: Optional[bool] = None,
     rule_type: Optional[RuleType] = None,
@@ -64,7 +64,7 @@ async def get_rule(rule_id: str):
     return rule
 
 
-@router.post("/", response_model=RuleResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=RuleResponse, status_code=status.HTTP_201_CREATED)
 async def create_rule(rule_data: RuleCreate):
     """
     Create a new rule.

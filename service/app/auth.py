@@ -1,7 +1,6 @@
 """Cognito JWT Authentication Middleware"""
 
 import logging
-import os
 from typing import Optional
 
 import httpx
@@ -9,12 +8,14 @@ from fastapi import Depends, HTTPException, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from jose import JWTError, jwt
 
+from app.config import settings
+
 logger = logging.getLogger(__name__)
 
-COGNITO_REGION = os.getenv("AWS_REGION", "us-east-1")
-COGNITO_USER_POOL_ID = os.getenv("COGNITO_USER_POOL_ID")
-COGNITO_APP_CLIENT_ID = os.getenv("COGNITO_APP_CLIENT_ID")
-AUTH_BYPASS = os.getenv("AUTH_BYPASS", "false").lower() == "true"
+COGNITO_REGION = settings.AWS_REGION
+COGNITO_USER_POOL_ID = settings.COGNITO_USER_POOL_ID
+COGNITO_APP_CLIENT_ID = settings.COGNITO_APP_CLIENT_ID
+AUTH_BYPASS = settings.AUTH_BYPASS
 
 # Module-level JWKS cache: dict mapping kid -> key dict
 _jwks_cache: dict = {}

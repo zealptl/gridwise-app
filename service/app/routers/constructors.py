@@ -7,7 +7,7 @@ from app.schemas.constructor import ConstructorCreate, ConstructorUpdate, Constr
 
 router = APIRouter(prefix="/constructors", tags=["constructors"], dependencies=[Depends(get_current_user)])
 
-@router.get("/", response_model=List[ConstructorResponse])
+@router.get("", response_model=List[ConstructorResponse])
 async def get_all_constructors(
     status: Optional[str] = Query(None, pattern="^(active|inactive)$"),
     skip: int = 0,
@@ -33,7 +33,7 @@ async def get_constructor(constructor_id: str):
         )
     return constructor
 
-@router.post("/", response_model=ConstructorResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=ConstructorResponse, status_code=status.HTTP_201_CREATED)
 async def create_constructor(constructor_data: ConstructorCreate):
     """Create a new constructor"""
     constructor = Constructor(**constructor_data.model_dump())

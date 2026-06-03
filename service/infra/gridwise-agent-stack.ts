@@ -50,45 +50,10 @@ export class GridwiseAgentStack extends cdk.Stack {
       stringValue: userPoolClient.userPoolClientId,
     });
 
-    // -------------------------------------------------------------------------
-    // 2.3 AgentCore Gateway
-    // AgentCore CDK constructs are in @aws-cdk/aws-bedrock-agentcore-alpha or
-    // provisioned as CfnResource until the L2 construct is GA.
-    // -------------------------------------------------------------------------
-    const agentcoreGateway = new cdk.CfnResource(this, 'GridwiseAgentCoreGateway', {
-      type: 'AWS::BedrockAgentCore::Gateway',
-      properties: {
-        GatewayName: 'gridwise-advisor-gateway',
-        Description: 'AgentCore Gateway for GridWise F1 Fantasy Advisor tools',
-      },
-    });
-
-    const gatewayEndpoint = agentcoreGateway.getAtt('GatewayEndpointUrl').toString();
-
-    new cdk.CfnOutput(this, 'AgentCoreGatewayEndpoint', { value: gatewayEndpoint });
-    new ssm.StringParameter(this, 'GatewayEndpointParam', {
-      parameterName: '/gridwise/agentcore/gateway-endpoint',
-      stringValue: gatewayEndpoint,
-    });
-
-    // -------------------------------------------------------------------------
-    // 2.4 AgentCore Memory Store
-    // -------------------------------------------------------------------------
-    const agentcoreMemory = new cdk.CfnResource(this, 'GridwiseAgentCoreMemory', {
-      type: 'AWS::BedrockAgentCore::MemoryStore',
-      properties: {
-        MemoryStoreName: 'gridwise-advisor-memory',
-        Description: 'AgentCore Memory Store for GridWise F1 Fantasy Advisor',
-      },
-    });
-
-    const memoryStoreId = agentcoreMemory.getAtt('MemoryStoreId').toString();
-
-    new cdk.CfnOutput(this, 'AgentCoreMemoryStoreId', { value: memoryStoreId });
-    new ssm.StringParameter(this, 'MemoryStoreIdParam', {
-      parameterName: '/gridwise/agentcore/memory-store-id',
-      stringValue: memoryStoreId,
-    });
+    // NOTE: AgentCore Gateway + Memory Store are commented out until
+    // AWS::BedrockAgentCore resources are broadly available in us-east-1.
+    // new cdk.CfnResource(this, 'GridwiseAgentCoreGateway', { type: 'AWS::BedrockAgentCore::Gateway', ... })
+    // new cdk.CfnResource(this, 'GridwiseAgentCoreMemory', { type: 'AWS::BedrockAgentCore::MemoryStore', ... })
 
     // -------------------------------------------------------------------------
     // 2.5 Secrets Manager — placeholder values only, never real keys
@@ -131,7 +96,7 @@ export class GridwiseAgentStack extends cdk.Stack {
         new iam.ServicePrincipal('lambda.amazonaws.com'),
         new iam.ServicePrincipal('ecs-tasks.amazonaws.com'),
       ),
-      description: 'IAM role for GridWise FastAPI service — Bedrock, AgentCore, Secrets Manager',
+      description: 'IAM role for GridWise FastAPI service - Bedrock, AgentCore, Secrets Manager',
     });
 
     // Bedrock InvokeModel for Claude Sonnet and Haiku

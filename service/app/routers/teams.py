@@ -18,7 +18,7 @@ from app.services.team_service import TeamService
 router = APIRouter(prefix="/teams", tags=["teams"], dependencies=[Depends(get_current_user)])
 
 
-@router.post("/", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=TeamResponse, status_code=status.HTTP_201_CREATED)
 async def create_team(team_data: TeamCreate):
     """
     Create a new fantasy team.
@@ -51,7 +51,7 @@ async def create_team(team_data: TeamCreate):
     return team
 
 
-@router.get("/", response_model=PaginatedTeamsResponse)
+@router.get("", response_model=PaginatedTeamsResponse)
 async def get_all_teams(
     created_by: Optional[str] = Query(None, description="Filter by user ID"),
     season: Optional[int] = Query(None, description="Filter by season year"),

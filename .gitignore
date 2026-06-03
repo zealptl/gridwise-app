@@ -6,3 +6,6 @@ node_modules
 
 # Local secrets — never commit
 secrets.local.env
+
+# CDK synthesized output — regenerated on every cdk synth
+cdk.out/

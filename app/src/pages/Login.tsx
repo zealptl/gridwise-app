@@ -3,10 +3,12 @@ import { useNavigate, Link } from 'react-router-dom'
 import { AuthenticationDetails, CognitoUser, CognitoUserPool } from 'amazon-cognito-identity-js'
 import { useAuthStore } from '@/stores/authStore'
 
-const userPool = new CognitoUserPool({
-  UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID ?? '',
-  ClientId: import.meta.env.VITE_COGNITO_APP_CLIENT_ID ?? '',
-})
+function getUserPool() {
+  return new CognitoUserPool({
+    UserPoolId: import.meta.env.VITE_COGNITO_USER_POOL_ID ?? '',
+    ClientId: import.meta.env.VITE_COGNITO_APP_CLIENT_ID ?? '',
+  })
+}
 
 export default function Login() {
   const navigate = useNavigate()
@@ -22,7 +24,7 @@ export default function Login() {
     setLoading(true)
 
     const authDetails = new AuthenticationDetails({ Username: email, Password: password })
-    const cognitoUser = new CognitoUser({ Username: email, Pool: userPool })
+    const cognitoUser = new CognitoUser({ Username: email, Pool: getUserPool() })
 
     cognitoUser.authenticateUser(authDetails, {
       onSuccess: result => {
@@ -81,7 +83,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="w-full rounded-md !bg-blue-600 px-4 py-2 text-sm font-medium !text-white hover:!bg-blue-700 disabled:opacity-50"
           >
             {loading ? 'Signing in…' : 'Sign in'}
           </button>

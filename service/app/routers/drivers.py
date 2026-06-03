@@ -7,7 +7,7 @@ from app.schemas.driver import DriverCreate, DriverUpdate, DriverResponse
 
 router = APIRouter(prefix="/drivers", tags=["drivers"], dependencies=[Depends(get_current_user)])
 
-@router.get("/", response_model=List[DriverResponse])
+@router.get("", response_model=List[DriverResponse])
 async def get_all_drivers(
     team_name: Optional[str] = None,
     status: Optional[str] = Query(None, pattern="^(active|inactive|reserve)$"),
@@ -36,7 +36,7 @@ async def get_driver(driver_id: str):
         )
     return driver
 
-@router.post("/", response_model=DriverResponse, status_code=status.HTTP_201_CREATED)
+@router.post("", response_model=DriverResponse, status_code=status.HTTP_201_CREATED)
 async def create_driver(driver_data: DriverCreate):
     """Create a new driver"""
     driver = Driver(**driver_data.model_dump())
