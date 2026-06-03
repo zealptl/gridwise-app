@@ -10,6 +10,7 @@ from app.config import settings
 from app.database import close_mongo_connection, connect_to_mongo
 from app.routers import constructors, drivers, rules, teams
 from app.routers import agent as agent_router
+from app.routers import auth as auth_router
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,7 @@ app.include_router(constructors.router, prefix=settings.API_V1_PREFIX)
 app.include_router(rules.router, prefix=settings.API_V1_PREFIX)
 app.include_router(teams.router, prefix=settings.API_V1_PREFIX)
 app.include_router(agent_router.router, prefix=settings.API_V1_PREFIX)
+app.include_router(auth_router.router, prefix=settings.API_V1_PREFIX)
 
 
 @app.get("/health")

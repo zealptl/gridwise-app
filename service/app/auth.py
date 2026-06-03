@@ -125,6 +125,15 @@ async def validate_token(token: str) -> str:
         raise credentials_exception
 
 
+def get_user_tier(jwt_token: str) -> str:
+    """Decode a Cognito JWT and return custom:tier claim, defaulting to 'free'."""
+    try:
+        claims = jwt.get_unverified_claims(jwt_token)
+        return claims.get("custom:tier", "free")
+    except Exception:
+        return "free"
+
+
 security = HTTPBearer()
 
 
