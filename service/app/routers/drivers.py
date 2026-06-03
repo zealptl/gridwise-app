@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Optional
 from datetime import datetime
+from app.auth import get_current_user
 from app.models.driver import Driver
 from app.schemas.driver import DriverCreate, DriverUpdate, DriverResponse
 
-router = APIRouter(prefix="/drivers", tags=["drivers"])
+router = APIRouter(prefix="/drivers", tags=["drivers"], dependencies=[Depends(get_current_user)])
 
 @router.get("/", response_model=List[DriverResponse])
 async def get_all_drivers(

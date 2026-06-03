@@ -1,10 +1,11 @@
-from fastapi import APIRouter, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import List, Optional
 from datetime import datetime
+from app.auth import get_current_user
 from app.models.constructor import Constructor
 from app.schemas.constructor import ConstructorCreate, ConstructorUpdate, ConstructorResponse
 
-router = APIRouter(prefix="/constructors", tags=["constructors"])
+router = APIRouter(prefix="/constructors", tags=["constructors"], dependencies=[Depends(get_current_user)])
 
 @router.get("/", response_model=List[ConstructorResponse])
 async def get_all_constructors(

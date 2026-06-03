@@ -3,12 +3,13 @@
 from datetime import datetime
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
+from app.auth import get_current_user
 from app.models.rule import Rule, RuleType
 from app.schemas.rule import RuleCreate, RuleResponse, RuleUpdate
 
-router = APIRouter(prefix="/rules", tags=["rules"])
+router = APIRouter(prefix="/rules", tags=["rules"], dependencies=[Depends(get_current_user)])
 
 
 @router.get("/", response_model=List[RuleResponse])
