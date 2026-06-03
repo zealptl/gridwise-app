@@ -26,6 +26,9 @@ export class GridwiseAgentStack extends cdk.Stack {
       },
       accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
+      customAttributes: {
+        tier: new cognito.StringAttribute({ mutable: true }),
+      },
     });
 
     const userPoolClient = new cognito.UserPoolClient(this, 'GridwiseUserPoolClient', {
