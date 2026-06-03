@@ -19,7 +19,29 @@
       "Bash(.venv/bin/python:*)",
       "Bash(npm run build:*)",
       "Bash(npx shadcn@latest add:*)",
-      "Bash(npm run dev:*)"
+      "Bash(npm run dev:*)",
+      "Bash(npm install:*)",
+      "Bash(python3 -m json.tool --no-ensure-ascii)",
+      "Bash(uv run *)",
+      "Bash(python3 -c \"import json,sys; spec=json.load\\(sys.stdin\\); [print\\(f'{list\\(methods.keys\\(\\)\\)[0].upper\\(\\):6} {path}'\\) for path, methods in spec['paths'].items\\(\\)]\")",
+      "Bash(curl -s http://localhost:8000/api/v1/teams/)",
+      "Bash(curl -s http://localhost:8000/api/v1/drivers/)",
+      "Bash(curl -s http://localhost:8000/api/v1/constructors/)",
+      "Bash(npx tsc *)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\({k:v for k,v in d.get\\('dependencies',{}\\).items\\(\\) if 'radix' in k}\\)\")",
+      "Bash(xargs -I{} sh -c 'echo \"=== {} ===\" && cat {}')",
+      "Bash(xargs cat)",
+      "Bash(npm show *)",
+      "Bash(python3 -c \"import sys,json; v=json.load\\(sys.stdin\\); print\\([x for x in v if x >= '1.1.5'][-5:]\\)\")",
+      "Bash(python3 -c \"import sys,json; v=json.load\\(sys.stdin\\); print\\([x for x in v if x >= '1.3.3'][-5:]\\)\")",
+      "Bash(python3 -c \"import sys,json; v=json.load\\(sys.stdin\\); print\\([x for x in v if x >= '1.3.8'][-5:]\\)\")",
+      "Bash(python3 -c \"import sys,json; v=json.load\\(sys.stdin\\); print\\([x for x in v if x >= '1.2.10'][-5:]\\)\")",
+      "Read(//Users/zealpatel/.config/**)",
+      "Read(//Users/zealpatel/**)",
+      "Bash(openspec new *)",
+      "Bash(openspec status *)",
+      "Bash(openspec instructions *)",
+      "Bash(python3 -c ' *)"
     ]
   }
 }
