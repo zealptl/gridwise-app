@@ -1,0 +1,96 @@
+[
+  {
+    "name": "get_live_session_data",
+    "description": "Fetches real-time F1 session data (lap times, tyre stints, weather, race control messages) from the OpenF1 API for the current race weekend session.",
+    "inputSchema": { "type": "object", "properties": {}, "required": [] }
+  },
+  {
+    "name": "get_historical_performance",
+    "description": "Fetches season-to-date driver standings, constructor standings, and recent race results from the Jolpica/Ergast F1 API.",
+    "inputSchema": { "type": "object", "properties": {}, "required": [] }
+  },
+  {
+    "name": "get_weather",
+    "description": "Fetches a 3-day weather forecast for an F1 circuit location. PREMIUM - requires custom:tier=premium JWT claim.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "circuit_location": { "type": "string", "description": "Circuit city or country, e.g. Monaco" }
+      },
+      "required": ["circuit_location"]
+    }
+  },
+  {
+    "name": "get_odds",
+    "description": "Fetches current F1 race winner betting odds and converts them to implied win probabilities. PREMIUM - requires custom:tier=premium JWT claim.",
+    "inputSchema": { "type": "object", "properties": {}, "required": [] }
+  },
+  {
+    "name": "get_reddit_sentiment",
+    "description": "Searches r/formula1 and r/FantasyF1 for community discussion about a race or driver. PREMIUM - requires custom:tier=premium JWT claim.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "race_name": { "type": "string", "description": "Race or driver name to search for" }
+      },
+      "required": ["race_name"]
+    }
+  },
+  {
+    "name": "get_user_team",
+    "description": "Retrieves the authenticated user's current F1 Fantasy team from the GridWise database.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "session_state": { "type": "object", "description": "Session state containing user_id" }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "get_current_prices",
+    "description": "Returns live market prices for every active F1 driver and constructor in the GridWise fantasy game.",
+    "inputSchema": { "type": "object", "properties": {}, "required": [] }
+  },
+  {
+    "name": "get_available_chips",
+    "description": "Returns chip/booster availability for the authenticated user this season (wildcard, limitless, no_negative, triple_boost, autopilot, final_fix).",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "session_state": { "type": "object", "description": "Session state containing user_id" }
+      },
+      "required": []
+    }
+  },
+  {
+    "name": "get_active_rules",
+    "description": "Fetches all currently active fantasy rules and constraints from the GridWise rules engine.",
+    "inputSchema": { "type": "object", "properties": {}, "required": [] }
+  },
+  {
+    "name": "validate_team",
+    "description": "Validates a proposed fantasy team against all active GridWise rules. MUST be called before submit_team.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "team": { "type": "object", "description": "Full team dict with team_name, drivers, constructors, drs_boost_driver_id, budget_cap" },
+        "user_team_count": { "type": "integer", "description": "Number of teams the user has created this season (default 0)" }
+      },
+      "required": ["team"]
+    }
+  },
+  {
+    "name": "submit_team",
+    "description": "Persists the validated fantasy team to the GridWise database. Only call after validate_team returns valid:true and the user has confirmed.",
+    "inputSchema": {
+      "type": "object",
+      "properties": {
+        "session_state": { "type": "object", "description": "Session state containing user_id" },
+        "team": { "type": "object", "description": "Validated team dict" },
+        "validated": { "type": "boolean", "description": "Must be true - set by validate_team result" }
+      },
+      "required": ["team", "validated"]
+    }
+  }
+]

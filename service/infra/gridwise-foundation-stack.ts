@@ -4,13 +4,14 @@ import * as cognito from 'aws-cdk-lib/aws-cognito';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as ecr from 'aws-cdk-lib/aws-ecr';
 
 export class GridwiseFoundationStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     // -------------------------------------------------------------------------
-    // Cognito User Pool — email + password auth
+    // Cognito User Pool - email + password auth
     // -------------------------------------------------------------------------
     const userPool = new cognito.UserPool(this, 'GridwiseUserPool', {
       userPoolName: 'gridwise-user-pool',
@@ -60,7 +61,7 @@ export class GridwiseFoundationStack extends cdk.Stack {
     });
 
     // -------------------------------------------------------------------------
-    // Secrets Manager — placeholder values only, never real keys
+    // Secrets Manager - placeholder values only, never real keys
     // -------------------------------------------------------------------------
     new secretsmanager.Secret(this, 'WeatherApiKey', {
       secretName: 'gridwise/weather-api-key',
@@ -91,7 +92,7 @@ export class GridwiseFoundationStack extends cdk.Stack {
     });
 
     // -------------------------------------------------------------------------
-    // IAM Role — FastAPI service (EC2 / ECS / App Runner)
+    // IAM Role - FastAPI service (EC2 / ECS / App Runner)
     // -------------------------------------------------------------------------
     const fastApiRole = new iam.Role(this, 'GridwiseFastApiRole', {
       roleName: 'gridwise-fastapi-service-role',
@@ -119,8 +120,23 @@ export class GridwiseFoundationStack extends cdk.Stack {
       actions: [
         'bedrock-agentcore:InvokeGateway',
         'bedrock-agentcore:GetGateway',
+        'bedrock-agentcore:ListGateways',
         'bedrock-agentcore:ListGatewayTargets',
+        'bedrock-agentcore:CreateAgentRuntime',
+        'bedrock-agentcore:GetAgentRuntime',
+        'bedrock-agentcore:ListAgentRuntimes',
+        'bedrock-agentcore:CreateAgentRuntimeEndpoint',
+        'bedrock-agentcore:GetAgentRuntimeEndpoint',
+        'bedrock-agentcore:DeleteAgentRuntime',
+        'bedrock-agentcore:DeleteAgentRuntimeEndpoint',
+        'bedrock-agentcore:CreateWorkloadIdentity',
+        'bedrock-agentcore:GetWorkloadIdentity',
       ],
+      resources: ['*'],
+    }));
+
+    fastApiRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['iam:CreateServiceLinkedRole', 'iam:PassRole'],
       resources: ['*'],
     }));
 
@@ -156,7 +172,7 @@ export class GridwiseFoundationStack extends cdk.Stack {
     });
 
     // -------------------------------------------------------------------------
-    // IAM Role — AgentCore Gateway service role
+    // IAM Role - AgentCore Gateway service role
     // -------------------------------------------------------------------------
     const gatewayServiceRole = new iam.Role(this, 'GridwiseGatewayServiceRole', {
       roleName: 'gridwise-gateway-service-role',
@@ -165,17 +181,17 @@ export class GridwiseFoundationStack extends cdk.Stack {
           StringEquals: { 'aws:SourceAccount': this.account },
         },
       }),
-      description: 'AgentCore Gateway service role — invokes the tools-proxy Lambda on behalf of agents',
+      description: 'AgentCore Gateway service role - invokes the tools-proxy Lambda on behalf of agents',
     });
 
     new cdk.CfnOutput(this, 'GatewayServiceRoleArn', {
       value: gatewayServiceRole.roleArn,
       exportName: 'GatewayServiceRoleArn',
-      description: 'Gateway service role — tighten the trust Condition to the gateway ARN after first deploy',
+      description: 'Gateway service role - tighten the trust Condition to the gateway ARN after first deploy',
     });
 
     // -------------------------------------------------------------------------
-    // IAM Role — AgentCore Runtime role (task 0.2)
+    // IAM Role - AgentCore Runtime role (task 0.2)
     // -------------------------------------------------------------------------
     const agentRuntimeRole = new iam.Role(this, 'GridwiseAgentRuntimeRole', {
       roleName: 'gridwise-agent-runtime-role',
@@ -221,6 +237,16 @@ export class GridwiseFoundationStack extends cdk.Stack {
       resources: [`arn:aws:ssm:*:${this.account}:parameter/gridwise/*`],
     }));
 
+    agentRuntimeRole.addToPolicy(new iam.PolicyStatement({
+      actions: [
+        'ecr:GetAuthorizationToken',
+        'ecr:BatchGetImage',
+        'ecr:GetDownloadUrlForLayer',
+        'ecr:BatchCheckLayerAvailability',
+      ],
+      resources: ['*'],
+    }));
+
     new cdk.CfnOutput(this, 'AgentRuntimeRoleArn', {
       value: agentRuntimeRole.roleArn,
       exportName: 'AgentRuntimeRoleArn',
@@ -228,6 +254,48 @@ export class GridwiseFoundationStack extends cdk.Stack {
     new ssm.StringParameter(this, 'AgentRuntimeRoleArnParam', {
       parameterName: '/gridwise/iam/agent-runtime-role-arn',
       stringValue: agentRuntimeRole.roleArn,
+    });
+
+    // -------------------------------------------------------------------------
+    // IAM Role - App Runner ECR access role (pull images from ECR)
+    // -------------------------------------------------------------------------
+    const appRunnerEcrRole = new iam.Role(this, 'GridwiseAppRunnerEcrRole', {
+      roleName: 'gridwise-apprunner-ecr-role',
+      assumedBy: new iam.ServicePrincipal('build.apprunner.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSAppRunnerServicePolicyForECRAccess'),
+      ],
+      description: 'Allows App Runner to pull images from ECR',
+    });
+
+    new cdk.CfnOutput(this, 'AppRunnerEcrRoleArn', {
+      value: appRunnerEcrRole.roleArn,
+      exportName: 'AppRunnerEcrRoleArn',
+    });
+
+    // -------------------------------------------------------------------------
+    // ECR Repositories (task 3.3) - created here so images can be pushed before
+    // GridwiseAgentStack deploys App Runner
+    // -------------------------------------------------------------------------
+    const fastApiRepo = new ecr.Repository(this, 'GridwiseFastApiRepo', {
+      repositoryName: 'gridwise-fastapi',
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      lifecycleRules: [{ maxImageCount: 5 }],
+    });
+
+    const agentRuntimeRepo = new ecr.Repository(this, 'GridwiseAgentRuntimeRepo', {
+      repositoryName: 'gridwise-agent-runtime',
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+      lifecycleRules: [{ maxImageCount: 5 }],
+    });
+
+    new cdk.CfnOutput(this, 'FastApiRepoUri', {
+      value: fastApiRepo.repositoryUri,
+      exportName: 'FastApiRepoUri',
+    });
+    new cdk.CfnOutput(this, 'AgentRuntimeRepoUri', {
+      value: agentRuntimeRepo.repositoryUri,
+      exportName: 'AgentRuntimeRepoUri',
     });
   }
 }

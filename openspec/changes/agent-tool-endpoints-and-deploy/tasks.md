@@ -15,8 +15,8 @@
 
 ## 1. CDK Stack 1 Deploy — Foundation
 
-- [ ] 1.1 Run `cd service/infra && cdk deploy GridwiseFoundationStack` — verify exit code 0; confirm outputs: `UserPoolId`, `UserPoolClientId`, `FastApiRoleArn`, `GatewayServiceRoleArn`
-- [ ] 1.2 Confirm SSM params written: `/gridwise/cognito/user-pool-id`, `/gridwise/cognito/app-client-id`, `/gridwise/iam/fastapi-role-arn`
+- [x] 1.1 Run `cd service/infra && cdk deploy GridwiseFoundationStack` — verify exit code 0; confirm outputs: `UserPoolId`, `UserPoolClientId`, `FastApiRoleArn`, `GatewayServiceRoleArn`
+- [x] 1.2 Confirm SSM params written: `/gridwise/cognito/user-pool-id`, `/gridwise/cognito/app-client-id`, `/gridwise/iam/fastapi-role-arn`
 
 ## 2. Cognito Tier Attribute
 
@@ -28,7 +28,7 @@
 
 - [x] 3.1 Create `service/Dockerfile` for the FastAPI service — base `python:3.12-slim`, install `uv`, copy `service/` (excluding `infra/`), run `uv sync --frozen`, entrypoint `uvicorn app.main:app --host 0.0.0.0 --port 8080`
 - [x] 3.2 Create `service/agent.Dockerfile` for the AgentCore Runtime — same base; entrypoint calls `python runtime_entry.py` (the F1 agent `BedrockAgentCoreApp` entrypoint written in task 10)
-- [ ] 3.3 Create ECR repository `gridwise-fastapi` and `gridwise-agent-runtime` via CDK in `gridwise-agent-stack.ts` (or `aws ecr create-repository` if doing manually); build and push both images: `docker build -f service/Dockerfile -t gridwise-fastapi .` + `docker tag ... && docker push`
+- [x] 3.3 Create ECR repository `gridwise-fastapi` and `gridwise-agent-runtime` via CDK in `gridwise-agent-stack.ts` (or `aws ecr create-repository` if doing manually); build and push both images: `docker build -f service/Dockerfile -t gridwise-fastapi .` + `docker tag ... && docker push`
 
 ## 4. FastAPI Tool Endpoints
 
@@ -54,15 +54,15 @@
 ## 6. AgentCore Memory Resources
 
 - [x] 6.1 Write `scripts/create_memory_resources.py` now (before checking CDK): use `bedrock_agentcore.memory.MemoryClient` to create session store (no strategies, 30-day expiry) and long-term store (USER_PREFERENCE + SEMANTIC, 90-day expiry); write both IDs to SSM (`/gridwise/agentcore/session-memory-id`, `/gridwise/agentcore/memory-id`) and print them; script should be idempotent (check if resources exist before creating)
-- [ ] 6.2 Run `cdk synth GridwiseAgentStack` — inspect the synthesized CloudFormation template; confirm whether `agentcore.Memory` L2 construct is available in the installed `aws-cdk-lib` version
-- [ ] **If CDK construct available** — 6.3a: Add `agentcore.Memory` session store to `gridwise-agent-stack.ts` (`memoryName: "gridwise-session-store"`, `expirationDuration: cdk.Duration.days(30)`, no strategies); add `agentcore.Memory` long-term store (`memoryName: "gridwise-memory"`, `expirationDuration: cdk.Duration.days(90)`, `memoryStrategies: [usingBuiltInUserPreference(), usingBuiltInSemantic()]`); write both IDs to SSM and `CfnOutput`
-- [ ] **If CDK construct unavailable** — 6.3b: Run `scripts/create_memory_resources.py`; confirm both IDs written to SSM before proceeding to Stack 2 deploy
+- [x] 6.2 Run `cdk synth GridwiseAgentStack` — inspect the synthesized CloudFormation template; confirm whether `agentcore.Memory` L2 construct is available in the installed `aws-cdk-lib` version
+- [x] **If CDK construct available** — 6.3a: Add `agentcore.Memory` session store to `gridwise-agent-stack.ts` (`memoryName: "gridwise-session-store"`, `expirationDuration: cdk.Duration.days(30)`, no strategies); add `agentcore.Memory` long-term store (`memoryName: "gridwise-memory"`, `expirationDuration: cdk.Duration.days(90)`, `memoryStrategies: [usingBuiltInUserPreference(), usingBuiltInSemantic()]`); write both IDs to SSM and `CfnOutput`
+- [x] **If CDK construct unavailable** — 6.3b: Run `scripts/create_memory_resources.py`; confirm both IDs written to SSM before proceeding to Stack 2 deploy
 - [x] 6.4 Add `CfnOutput` (or script log) for `SessionMemoryId` and `LongTermMemoryId`
 
 ## 7. bedrock-agentcore Package
 
 - [x] 7.1 Add `bedrock-agentcore = ">=1.8.0"` to `service/pyproject.toml` dependencies
-- [ ] 7.2 Run `uv sync` in `service/` and verify `from bedrock_agentcore.memory import MemoryClient` imports successfully
+- [x] 7.2 Run `uv sync` in `service/` and verify `from bedrock_agentcore.memory import MemoryClient` imports successfully
 
 ## 8. memory.py Rewrite
 
@@ -109,7 +109,7 @@
 
 ## 13. CDK Stack 2 Deploy
 
-- [ ] 13.1 Run `cd service/infra && cdk deploy GridwiseAgentStack` — verify exit code 0 and all outputs present: `AppRunnerUrl`, `AgentCoreRuntimeEndpoint`, `AgentCoreGatewayId`, `AgentCoreGatewayUrl`, `SessionMemoryId` (if CDK Memory available), `LongTermMemoryId` (if CDK Memory available)
+- [x] 13.1 Run `cd service/infra && cdk deploy GridwiseAgentStack` — verify exit code 0 and all outputs present: `AppRunnerUrl`, `AgentCoreRuntimeEndpoint`, `AgentCoreGatewayId`, `AgentCoreGatewayUrl`, `SessionMemoryId` (if CDK Memory available), `LongTermMemoryId` (if CDK Memory available)
 - [ ] 13.2 Verify all 11 tools listed: `aws bedrock-agentcore list-gateway-tools --gateway-id <AgentCoreGatewayId>`
 - [ ] 13.3 Confirm all SSM params written (see SSM Parameters table in design.md)
 
