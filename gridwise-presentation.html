@@ -1213,51 +1213,51 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
         </div>
       </div>
 
-      <!-- Phase 3: Parallel Gather — shared infra once, then fanout to 3 tool targets -->
+      <!-- Phase 3: Parallel Gather -->
       <div class="phase-row par">
         <div class="phase-label">
           <div class="ph-num">03</div>
           <div class="ph-name">Parallel<br>Gather</div>
         </div>
         <div class="phase-content">
-          <!-- Shared infrastructure (shown once for all 3 sub-agents) -->
-          <div class="par-shared">
-            <div class="ec-box amber"><div class="ec-name">Gateway</div><div class="ec-sub">JWT tier filter<br>semantic discovery</div></div>
+          <div class="par-sub">
+            <div class="par-agent">F1DataAgent</div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">tool call</div></div>
+            <div class="ec-box amber"><div class="ec-name">Gateway</div><div class="ec-sub">JWT tier filter</div></div>
             <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">SigV4 invoke</div></div>
             <div class="ec-box amber"><div class="ec-name">Lambda<br>Proxy</div><div class="ec-sub">SigV4 signs</div></div>
-            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">POST /tools/*</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">POST /agent/tools/*</div></div>
             <div class="ec-box"><div class="ec-name">FastAPI<br>Tools</div><div class="ec-sub">11 endpoints</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
+            <div class="ec-box"><div class="ec-name">OpenF1<br>· Jolpica</div><div class="ec-sub">live data</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
+            <div class="ec-box green"><div class="ec-name">f1_data</div><div class="ec-sub">STM</div></div>
           </div>
-          <!-- Fanout connector -->
-          <div class="par-fork">
-            <div class="par-fork-line"></div>
-            <div class="par-fork-tick"></div>
-            <div class="par-fork-tick"></div>
-            <div class="par-fork-tick"></div>
+          <div class="par-sub">
+            <div class="par-agent premium">IntelAgent<br><span style="font-size:8px;opacity:0.7">PREMIUM</span></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">tool call</div></div>
+            <div class="ec-box amber"><div class="ec-name">Gateway</div><div class="ec-sub">tier filter</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">SigV4 invoke</div></div>
+            <div class="ec-box amber"><div class="ec-name">Lambda<br>Proxy</div><div class="ec-sub">SigV4 signs</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">POST /agent/tools/*</div></div>
+            <div class="ec-box"><div class="ec-name">FastAPI<br>Tools</div><div class="ec-sub">11 endpoints</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
+            <div class="ec-box purple"><div class="ec-name">Weather<br>Odds Reddit</div><div class="ec-sub">premium APIs</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
+            <div class="ec-box green"><div class="ec-name">intel</div><div class="ec-sub">STM</div></div>
           </div>
-          <!-- Per-agent unique targets -->
-          <div class="par-results">
-            <div class="par-result-row">
-              <div class="par-agent-tag">F1Data<br>Agent</div>
-              <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
-              <div class="ec-box"><div class="ec-name">OpenF1 · Jolpica</div><div class="ec-sub">live session + standings</div></div>
-              <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
-              <div class="ec-box green"><div class="ec-name">f1_data</div><div class="ec-sub">STM</div></div>
-            </div>
-            <div class="par-result-row">
-              <div class="par-agent-tag premium">Intel<br>Agent ★</div>
-              <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
-              <div class="ec-box purple"><div class="ec-name">Weather · Odds · Reddit</div><div class="ec-sub">premium · tier-gated</div></div>
-              <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
-              <div class="ec-box green"><div class="ec-name">intel</div><div class="ec-sub">STM</div></div>
-            </div>
-            <div class="par-result-row">
-              <div class="par-agent-tag">Fantasy<br>Context</div>
-              <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
-              <div class="ec-box"><div class="ec-name">F1 Fantasy · MongoDB</div><div class="ec-sub">team + prices + rules</div></div>
-              <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
-              <div class="ec-box green"><div class="ec-name">fantasy_<br>context</div><div class="ec-sub">STM</div></div>
-            </div>
+          <div class="par-sub">
+            <div class="par-agent">FantasyCtx</div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">tool call</div></div>
+            <div class="ec-box amber"><div class="ec-name">Gateway</div><div class="ec-sub">tier filter</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">SigV4 invoke</div></div>
+            <div class="ec-box amber"><div class="ec-name">Lambda<br>Proxy</div><div class="ec-sub">SigV4 signs</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">POST /agent/tools/*</div></div>
+            <div class="ec-box"><div class="ec-name">FastAPI<br>Tools</div><div class="ec-sub">11 endpoints</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
+            <div class="ec-box"><div class="ec-name">F1 Fantasy<br>· MongoDB</div><div class="ec-sub">team + rules</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
+            <div class="ec-box green"><div class="ec-name">fantasy_<br>context</div><div class="ec-sub">STM</div></div>
           </div>
         </div>
       </div>
