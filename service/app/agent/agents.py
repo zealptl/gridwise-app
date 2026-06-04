@@ -36,6 +36,13 @@ REASONING APPROACH:
 
 SUBMISSION CONSTRAINT:
 NEVER call SubmissionAgent without explicit user confirmation. The user must actively choose to apply the recommendation.
+
+MEMORY CONTEXT:
+- Before each turn, <PAST_CONVERSATIONS> may be injected with relevant memories from prior sessions.
+- Use these memories to personalise recommendations — reference past preferences and strategies.
+- If <PAST_CONVERSATIONS> is empty, provide a recommendation without prior context.
+- Free-tier users: intelligence tools (weather, odds, Reddit) are unavailable. State this and reduce confidence.
+- Premium-tier users: all 11 tools available.
 """
 
 
@@ -155,13 +162,26 @@ def _build_submission_agent(gateway):
     )
 
 
-def build_f1_advisor_graph(user_jwt: Optional[str] = None):
+async def _persist_session_callback(callback_context) -> None:
+    """Persist completed session to long-term memory after each turn."""
+    try:
+        session = callback_context.session
+        memory_service = callback_context.memory_service
+        if memory_service and session:
+            await memory_service.add_session_to_memory(session)
+    except Exception as exc:
+        logger.warning("after_agent_callback: session persist failed: %s", exc)
+
+
+def build_f1_advisor_graph(user_jwt: Optional[str] = None, user_id: str = "anonymous"):
     """Build and return the complete F1 Fantasy Advisor agent graph.
 
     Args:
         user_jwt: Raw Cognito JWT string from the user's Authorization header.
             Forwarded to AgentCoreGateway so the gateway can apply tier-based
             tool filtering for this user.
+        user_id: The authenticated user's ID, used to scope session and memory
+            services.
     """
     try:
         from google.adk.agents import LlmAgent  # type: ignore
@@ -172,12 +192,28 @@ def build_f1_advisor_graph(user_jwt: Optional[str] = None):
             "Install it with: pip install google-adk"
         ) from exc
 
+    try:
+        from app.agent.memory import AgentCoreMemoryService, get_memory_service  # noqa: F401
+        from app.agent.session import AgentCoreSessionService, get_session_service  # noqa: F401
+    except ImportError:
+        def get_memory_service():
+            return None
+
+        def get_session_service():
+            return None
+
+    try:
+        from google.adk.tools import preload_memory  # type: ignore
+        memory_tools = [preload_memory]
+    except ImportError:
+        memory_tools = []
+
     from app.agent.gateway import AgentCoreGateway
-    from app.agent.memory import AgentCoreMemory
+
+    session_service = get_session_service()
+    memory_svc = get_memory_service()
 
     gateway = AgentCoreGateway(jwt=user_jwt)
-    memory = AgentCoreMemory()
-
     data_gathering = _build_data_gathering_agent(gateway)
     submission_agent = _build_submission_agent(gateway)
 
@@ -187,7 +223,13 @@ def build_f1_advisor_graph(user_jwt: Optional[str] = None):
         description="Root F1 Fantasy Advisor — orchestrates data gathering and team recommendation.",
         instruction=ADVISOR_SYSTEM_PROMPT,
         sub_agents=[data_gathering, submission_agent],
+        tools=memory_tools,
+        after_agent_callback=_persist_session_callback,
     )
 
-    logger.info("Built F1 Fantasy Advisor agent graph (jwt=%s)", "present" if user_jwt else "absent")
-    return advisor
+    logger.info(
+        "Built F1 Fantasy Advisor agent graph (jwt=%s, user_id=%s)",
+        "present" if user_jwt else "absent",
+        user_id,
+    )
+    return advisor, session_service, memory_svc
