@@ -3,7 +3,13 @@ Agent router — session creation and CopilotKit AG-UI streaming chat.
 """
 import json
 import logging
+import os
 import uuid
+import botocore.auth
+import botocore.awsrequest
+import botocore.session
+import urllib.parse
+import urllib.request
 from typing import Any, AsyncGenerator, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Security
@@ -22,6 +28,57 @@ _bearer = HTTPBearer()
 
 async def get_raw_jwt(credentials: HTTPAuthorizationCredentials = Security(_bearer)) -> str:
     return credentials.credentials
+
+
+def _extract_sub(jwt_token: str) -> Optional[str]:
+    """Decode JWT without verification to extract sub claim."""
+    try:
+        from jose import jwt as jose_jwt
+        claims = jose_jwt.get_unverified_claims(jwt_token)
+        return claims.get("sub")
+    except Exception:
+        return None
+
+
+def _get_runtime_endpoint() -> str:
+    if url := os.getenv("AGENTCORE_RUNTIME_ENDPOINT"):
+        return url
+    try:
+        import boto3
+        ssm = boto3.client("ssm", region_name=os.getenv("AWS_REGION", "us-east-1"))
+        return ssm.get_parameter(Name="/gridwise/agentcore/runtime-endpoint")["Parameter"]["Value"]
+    except Exception:
+        return ""
+
+
+async def _invoke_runtime(endpoint: str, payload: dict) -> str:
+    """Invoke AgentCore Runtime with SigV4-signed request."""
+    import asyncio
+
+    body = json.dumps(payload).encode()
+    region = os.getenv("AWS_REGION", "us-east-1")
+
+    def _sync_invoke():
+        session = botocore.session.get_session()
+        credentials = session.get_credentials().get_frozen_credentials()
+        parsed = urllib.parse.urlparse(endpoint)
+
+        request = botocore.awsrequest.AWSRequest(
+            method="POST",
+            url=endpoint,
+            data=body,
+            headers={"Content-Type": "application/json", "Host": parsed.netloc},
+        )
+        signer = botocore.auth.SigV4Auth(credentials, "bedrock-agentcore", region)
+        signer.add_auth(request)
+
+        req = urllib.request.Request(endpoint, data=body, headers=dict(request.headers), method="POST")
+        with urllib.request.urlopen(req, timeout=120) as resp:
+            result = json.loads(resp.read())
+            return result.get("response", "")
+
+    loop = asyncio.get_event_loop()
+    return await loop.run_in_executor(None, _sync_invoke)
 
 
 # ---------------------------------------------------------------------------
@@ -76,13 +133,15 @@ async def chat_stream(
     raw_jwt: str = Depends(get_raw_jwt),
 ) -> StreamingResponse:
     """AG-UI streaming endpoint consumed by CopilotKit's CopilotChat component."""
+    # Validate sub claim can be extracted
+    sub = _extract_sub(raw_jwt)
+    if not sub:
+        raise HTTPException(status_code=401, detail="Cannot extract user identity from token")
+
     return StreamingResponse(
-        _stream_ag_ui(request, user_id, raw_jwt),
+        _stream_ag_ui(request, sub, raw_jwt),
         media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-        },
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
@@ -103,7 +162,6 @@ async def _stream_ag_ui(
     run_id = request.runId
     msg_id = str(uuid.uuid4())
 
-    # Extract the last user message
     user_message = ""
     for m in reversed(request.messages):
         if m.role == "user":
@@ -119,49 +177,56 @@ async def _stream_ag_ui(
     yield _evt({"type": "TEXT_MESSAGE_START", "messageId": msg_id, "role": "assistant"})
 
     try:
-        from app.agent.agents import build_f1_advisor_graph
-        from google.adk.runners import Runner  # type: ignore
-        from google.adk.sessions import InMemorySessionService  # type: ignore
-        from google.genai import types as genai_types  # type: ignore
+        runtime_endpoint = _get_runtime_endpoint()
 
-        advisor = build_f1_advisor_graph(user_jwt=user_jwt)
+        if runtime_endpoint:
+            # Invoke AgentCore Runtime via SigV4
+            response_text = await _invoke_runtime(runtime_endpoint, {
+                "prompt": user_message,
+                "user_jwt": user_jwt,
+                "user_id": user_id,
+                "session_id": thread_id,
+            })
+            if response_text:
+                yield _evt({"type": "TEXT_MESSAGE_CONTENT", "messageId": msg_id, "delta": response_text})
+        else:
+            # Fallback: direct ADK runner (for local dev without AgentCore Runtime)
+            from app.agent.agents import build_f1_advisor_graph
+            from google.adk.runners import Runner  # type: ignore
+            from google.genai import types as genai_types  # type: ignore
 
-        session_service = InMemorySessionService()
-        session = await session_service.get_session(
-            app_name="gridwise", user_id=user_id, session_id=thread_id,
-        )
-        if session is None:
-            session = await session_service.create_session(
-                app_name="gridwise",
-                user_id=user_id,
-                session_id=thread_id,
-                state={"user_id": user_id},
-            )
+            result = build_f1_advisor_graph(user_jwt=user_jwt, user_id=user_id)
+            if isinstance(result, tuple):
+                advisor, session_service, memory_svc = result
+            else:
+                advisor = result
+                from google.adk.sessions import InMemorySessionService  # type: ignore
+                session_service = InMemorySessionService()
+                memory_svc = None
 
-        runner = Runner(agent=advisor, app_name="gridwise", session_service=session_service)
+            runner_kwargs = {"agent": advisor, "app_name": "gridwise", "session_service": session_service}
+            if memory_svc:
+                runner_kwargs["memory_service"] = memory_svc
+            runner = Runner(**runner_kwargs)
 
-        content = genai_types.Content(
-            role="user",
-            parts=[genai_types.Part(text=user_message)],
-        )
+            session = await session_service.get_session(app_name="gridwise", user_id=user_id, session_id=thread_id)
+            if session is None:
+                session = await session_service.create_session(app_name="gridwise", user_id=user_id, session_id=thread_id, state={"user_id": user_id})
 
-        async for event in runner.run_async(
-            user_id=user_id,
-            session_id=thread_id,
-            new_message=content,
-        ):
-            ag_ui = _adk_event_to_ag_ui(event, msg_id, thread_id)
-            for evt in ag_ui:
-                yield evt
+            content = genai_types.Content(role="user", parts=[genai_types.Part(text=user_message)])
 
+            async for event in runner.run_async(user_id=user_id, session_id=thread_id, new_message=content):
+                for ag_evt in _adk_event_to_ag_ui(event, msg_id, thread_id):
+                    yield ag_evt
+
+    except HTTPException:
+        raise
     except ImportError as exc:
         logger.error("ADK not installed: %s", exc)
-        error_text = "Agent framework not available."
-        yield _evt({"type": "TEXT_MESSAGE_CONTENT", "messageId": msg_id, "delta": error_text})
+        yield _evt({"type": "TEXT_MESSAGE_CONTENT", "messageId": msg_id, "delta": "Agent framework not available."})
     except Exception as exc:
         logger.error("Agent stream error: %s", exc, exc_info=True)
-        error_text = "An error occurred while processing your request."
-        yield _evt({"type": "TEXT_MESSAGE_CONTENT", "messageId": msg_id, "delta": error_text})
+        yield _evt({"type": "TEXT_MESSAGE_CONTENT", "messageId": msg_id, "delta": "An error occurred while processing your request."})
 
     yield _evt({"type": "TEXT_MESSAGE_END", "messageId": msg_id})
     yield _evt({"type": "RUN_FINISHED", "threadId": thread_id, "runId": run_id})
