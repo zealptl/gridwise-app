@@ -66,6 +66,116 @@
       Reddit, F1 Fantasy API)
 ```
 
+### AWS Architecture Diagram
+
+> **Note:** React frontend and FastAPI service are run locally / not yet deployed to cloud hosting. Placeholder boxes shown with dashed borders.
+
+```mermaid
+graph TB
+    subgraph Client["Client (Local — not yet deployed)"]
+        UI["⬜ React Frontend\n(Vite · CopilotKit)\nlocalhost:5173"]
+    end
+
+    subgraph FastAPI_Box["FastAPI Service (Local — not yet deployed)"]
+        API["⬜ FastAPI\n(Python 3.12)\nlocalhost:8000"]
+    end
+
+    subgraph AWS["AWS (us-east-1)"]
+        subgraph Auth["Authentication"]
+            Cognito["🔐 Amazon Cognito\nUser Pool\ncustom:tier claim"]
+        end
+
+        subgraph Storage["Storage"]
+            MongoDB["🗄️ MongoDB\n(self-hosted)\nTeams · Rules · Drivers"]
+            Secrets["🔑 Secrets Manager\nWeatherAPI · OddsAPI\nReddit · F1 credentials"]
+            SSM["📋 SSM Parameter Store\nEndpoints · IDs · ARNs"]
+        end
+
+        subgraph IAM_box["IAM"]
+            Roles["👤 IAM Roles\nfastapi-service-role\ngateway-service-role\nagent-runtime-role"]
+        end
+
+        subgraph ECR_box["Container Registry"]
+            ECR["📦 ECR\ngridwise-agent-runtime\n(agent graph image)"]
+        end
+
+        subgraph AgentCore["AWS Bedrock AgentCore"]
+            Runtime["🤖 AgentCore Runtime\ngridwise_agent_runtime\nBedrockAgentCoreApp\n(F1 advisor graph)"]
+            Gateway["🔀 AgentCore Gateway\ngridwise-agent-gateway\nJWT Cognito authoriser\nSemantic tool discovery"]
+            Memory["🧠 AgentCore Memory\nSession store 30d\nLong-term store 90d"]
+        end
+
+        subgraph Lambda_box["Lambda"]
+            LambdaProxy["λ gridwise-tools-proxy\nSigV4 signs requests\nGateway → FastAPI"]
+            RuntimeCR["λ RuntimeCrHandler\nCDK Custom Resource\nCreates AgentCore Runtime"]
+        end
+
+        subgraph Bedrock["Amazon Bedrock"]
+            Sonnet["Claude 3.5 Sonnet\n(root agent)"]
+            Haiku["Claude 3 Haiku\n(sub-agents)"]
+        end
+    end
+
+    subgraph External["External APIs"]
+        OpenF1["OpenF1 API\n(live session data)"]
+        Jolpica["Jolpica API\n(standings)"]
+        WeatherAPI["WeatherAPI\n(forecast) PREMIUM"]
+        OddsAPI["The Odds API\n(race odds) PREMIUM"]
+        Reddit["Reddit API\n(sentiment) PREMIUM"]
+        F1Fantasy["F1 Fantasy API\n(team · prices · chips)"]
+    end
+
+    %% User → Frontend → FastAPI
+    UI -->|"HTTPS + JWT"| API
+    API -->|"JWT validation"| Cognito
+    API -->|"team/rule data"| MongoDB
+    API -->|"SigV4 POST\n/api/v1/agent/chat"| Runtime
+
+    %% AgentCore Runtime → Gateway → Lambda → FastAPI tools
+    Runtime -->|"semantic discovery\n+ JWT tier filter"| Gateway
+    Runtime <-->|"session + LTM"| Memory
+    Gateway -->|"invoke"| LambdaProxy
+    LambdaProxy -->|"SigV4-signed POST\n/api/v1/agent/tools/*"| API
+
+    %% FastAPI tools → external APIs
+    API --> OpenF1
+    API --> Jolpica
+    API --> WeatherAPI
+    API --> OddsAPI
+    API --> Reddit
+    API --> F1Fantasy
+
+    %% Secrets & config
+    API -->|"get secrets"| Secrets
+    API -->|"get params"| SSM
+    Runtime -->|"get params"| SSM
+
+    %% Bedrock models
+    Runtime -->|"InvokeModel"| Sonnet
+    Runtime -->|"InvokeModel"| Haiku
+
+    %% ECR → Runtime
+    ECR -->|"container image"| Runtime
+
+    %% CDK custom resource
+    RuntimeCR -->|"creates runtime"| Runtime
+
+    %% Styling
+    classDef placeholder fill:#f5f5f5,stroke:#999,stroke-dasharray:5 5,color:#666
+    classDef aws fill:#FF9900,stroke:#c47700,color:#fff
+    classDef agentcore fill:#7B2FBE,stroke:#5a1f8c,color:#fff
+    classDef bedrock fill:#01A88D,stroke:#017a67,color:#fff
+    classDef external fill:#e8f5e9,stroke:#2e7d32,color:#333
+    classDef lambda fill:#FF9900,stroke:#c47700,color:#fff
+
+    class UI,API placeholder
+    class Cognito,MongoDB,Secrets,SSM,Roles,ECR aws
+    class Runtime,Gateway,Memory agentcore
+    class Sonnet,Haiku bedrock
+    class OpenF1,Jolpica,WeatherAPI,OddsAPI,Reddit,F1Fantasy external
+    class LambdaProxy,RuntimeCR lambda
+```
+
 ### Key Components
 
 | Component | Technology | Responsibility |
