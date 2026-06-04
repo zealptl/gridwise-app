@@ -36,6 +36,7 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
   --purple: #8B5CF6;
   --teal: #06B6D4;
   --green: #10B981;
+  --blue: #3B82F6;
   --white: #F0F2F5;
   --muted: rgba(240,242,245,0.55);
   --faint: rgba(240,242,245,0.18);
@@ -314,44 +315,54 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
 #s5 .content {
   position:absolute; left:88px; top:110px; right:80px; bottom:70px; z-index:10;
 }
-#s5 .aws-grid {
-  display:grid; grid-template-columns:repeat(4,1fr);
-  gap:12px; margin-top:16px;
+/* Three grouped panels */
+#s5 .aws-groups {
+  display:flex; gap:20px; margin-top:16px; height:740px;
 }
+#s5 .aws-group {
+  display:flex; flex-direction:column; overflow:hidden; flex-shrink:0;
+}
+#s5 .aws-group.g-agentcore { width:460px; border:1.5px solid rgba(139,92,246,0.45); }
+#s5 .aws-group.g-bedrock   { width:380px; border:1.5px solid rgba(6,182,212,0.45); }
+#s5 .aws-group.g-other     { flex:1; border:1px solid rgba(255,255,255,0.09); }
+#s5 .ag-head {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  letter-spacing:0.22em; text-transform:uppercase;
+  padding:13px 20px; flex-shrink:0;
+}
+#s5 .aws-group.g-agentcore .ag-head { color:var(--purple); background:rgba(139,92,246,0.1);  border-bottom:1px solid rgba(139,92,246,0.22); }
+#s5 .aws-group.g-bedrock   .ag-head { color:var(--teal);   background:rgba(6,182,212,0.1);   border-bottom:1px solid rgba(6,182,212,0.22); }
+#s5 .aws-group.g-other     .ag-head { color:var(--muted);  background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.07); }
+#s5 .ag-cards   { flex:1; display:flex; flex-direction:column; }
+#s5 .ag-cards-2 { flex:1; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3,1fr); }
 #s5 .aws-card {
-  padding:28px 24px; border:1px solid var(--border);
-  background:var(--panel); display:flex; flex-direction:column; gap:12px;
+  flex:1; padding:20px 22px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  border-right:1px solid rgba(255,255,255,0.05);
+  background:var(--panel); display:flex; flex-direction:column; gap:10px;
 }
-#s5 .aws-card.red    { border-color:rgba(225,6,0,0.5);   background:var(--red-glow); }
-#s5 .aws-card.amber  { border-color:rgba(255,135,0,0.4); background:var(--amber-glow); }
-#s5 .aws-card.purple { border-color:rgba(139,92,246,0.5);background:rgba(139,92,246,0.08); }
-#s5 .aws-card.teal   { border-color:rgba(6,182,212,0.5); background:rgba(6,182,212,0.08); }
-#s5 .aws-card.green  { border-color:rgba(16,185,129,0.5);background:rgba(16,185,129,0.08); }
-#s5 .aws-card.local  { border-style:dashed; border-color:rgba(255,255,255,0.15); }
+#s5 .aws-card.purple { background:rgba(139,92,246,0.07); }
+#s5 .aws-card.teal   { background:rgba(6,182,212,0.07); }
+#s5 .aws-card.amber  { background:rgba(255,135,0,0.07); }
+#s5 .aws-card.green  { background:rgba(16,185,129,0.07); }
+#s5 .aws-card.blue   { background:rgba(59,130,246,0.07); }
 #s5 .aws-cat {
   font-family:var(--mono); font-size:10px; font-weight:700;
   letter-spacing:0.2em; text-transform:uppercase;
 }
-#s5 .aws-card.red    .aws-cat { color:var(--red); }
-#s5 .aws-card.amber  .aws-cat { color:var(--amber); }
 #s5 .aws-card.purple .aws-cat { color:var(--purple); }
 #s5 .aws-card.teal   .aws-cat { color:var(--teal); }
+#s5 .aws-card.amber  .aws-cat { color:var(--amber); }
 #s5 .aws-card.green  .aws-cat { color:var(--green); }
-#s5 .aws-card.local  .aws-cat { color:var(--faint); }
+#s5 .aws-card.blue   .aws-cat { color:var(--blue); }
 #s5 .aws-name {
-  font-family:'Barlow Condensed', sans-serif; font-size:30px;
+  font-family:'Barlow Condensed', sans-serif; font-size:28px;
   font-weight:700; text-transform:uppercase; letter-spacing:0.01em;
   color:var(--white); line-height:1.0;
 }
 #s5 .aws-detail {
-  font-family:var(--mono); font-size:11px; letter-spacing:0.08em;
-  color:var(--muted); text-transform:uppercase; line-height:1.5;
-}
-#s5 .section-label {
-  font-family:var(--mono); font-size:10px; letter-spacing:0.22em;
-  color:var(--faint); text-transform:uppercase;
-  grid-column:1/-1; margin-top:8px; padding-top:12px;
-  border-top:1px solid var(--border);
+  font-family:var(--mono); font-size:10px; letter-spacing:0.07em;
+  color:var(--muted); text-transform:uppercase; line-height:1.55;
 }
 
 /* ============================================
@@ -933,73 +944,84 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
     <div class="eyebrow reveal-left d1">Infrastructure</div>
     <div class="slide-title reveal-left d2" style="font-size:80px;margin-bottom:20px;">AWS Cloud Services</div>
 
-    <div class="aws-grid reveal d3">
-      <div class="aws-card local">
-        <div class="aws-cat">Local — Not Deployed</div>
-        <div class="aws-name">React Frontend</div>
-        <div class="aws-detail">Vite · CopilotKit<br>localhost:5173</div>
-      </div>
-      <div class="aws-card local">
-        <div class="aws-cat">Local — Not Deployed</div>
-        <div class="aws-name">FastAPI Service</div>
-        <div class="aws-detail">Python 3.12<br>localhost:8000</div>
-      </div>
-      <div class="aws-card green">
-        <div class="aws-cat">Auth</div>
-        <div class="aws-name">Amazon Cognito</div>
-        <div class="aws-detail">User Pool · JWT issuance<br>custom:tier claim</div>
-      </div>
-      <div class="aws-card amber">
-        <div class="aws-cat">Storage</div>
-        <div class="aws-name">Secrets Manager</div>
-        <div class="aws-detail">WeatherAPI · OddsAPI<br>Reddit · F1 credentials</div>
+    <div class="aws-groups reveal d3">
+
+      <!-- AgentCore Group -->
+      <div class="aws-group g-agentcore">
+        <div class="ag-head">AgentCore</div>
+        <div class="ag-cards">
+          <div class="aws-card purple">
+            <div class="aws-cat">Runtime</div>
+            <div class="aws-name">Agent Runtime</div>
+            <div class="aws-detail">BedrockAgentCoreApp<br>Container image via ECR</div>
+          </div>
+          <div class="aws-card purple">
+            <div class="aws-cat">Gateway</div>
+            <div class="aws-name">Agent Gateway</div>
+            <div class="aws-detail">JWT Cognito auth<br>11 tools · Semantic discovery</div>
+          </div>
+          <div class="aws-card purple">
+            <div class="aws-cat">Memory</div>
+            <div class="aws-name">Agent Memory</div>
+            <div class="aws-detail">STM: 30-day session<br>LTM: 90-day long-term</div>
+          </div>
+        </div>
       </div>
 
-      <div class="section-label">AgentCore (Bedrock) — All Deployed</div>
-
-      <div class="aws-card red">
-        <div class="aws-cat">AgentCore</div>
-        <div class="aws-name">Runtime</div>
-        <div class="aws-detail">BedrockAgentCoreApp<br>Container via ECR</div>
-      </div>
-      <div class="aws-card red">
-        <div class="aws-cat">AgentCore</div>
-        <div class="aws-name">Gateway</div>
-        <div class="aws-detail">JWT Cognito auth<br>11 tools · semantic discovery</div>
-      </div>
-      <div class="aws-card red">
-        <div class="aws-cat">AgentCore</div>
-        <div class="aws-name">Memory</div>
-        <div class="aws-detail">STM: 30-day session<br>LTM: 90-day long-term</div>
-      </div>
-      <div class="aws-card amber">
-        <div class="aws-cat">Lambda · AWS</div>
-        <div class="aws-name">Tools Proxy</div>
-        <div class="aws-detail">SigV4 signs requests<br>Gateway → FastAPI</div>
+      <!-- Bedrock Group -->
+      <div class="aws-group g-bedrock">
+        <div class="ag-head">Amazon Bedrock — AI Models</div>
+        <div class="ag-cards">
+          <div class="aws-card teal">
+            <div class="aws-cat">Root Agent</div>
+            <div class="aws-name">Claude Sonnet 3.5</div>
+            <div class="aws-detail">F1FantasyAdvisor<br>Synthesis + orchestration</div>
+          </div>
+          <div class="aws-card teal">
+            <div class="aws-cat">Sub-Agents × 5</div>
+            <div class="aws-name">Claude Haiku 3</div>
+            <div class="aws-detail">DataGathering pipeline<br>Submission flow</div>
+          </div>
+        </div>
       </div>
 
-      <div class="section-label">Models &amp; Registry</div>
+      <!-- Supporting Services Group -->
+      <div class="aws-group g-other">
+        <div class="ag-head">Lambda · Auth · Config · Registry</div>
+        <div class="ag-cards-2">
+          <div class="aws-card amber">
+            <div class="aws-cat">Lambda · Compute</div>
+            <div class="aws-name">SigV4 Proxy</div>
+            <div class="aws-detail">Signs requests<br>Gateway → FastAPI tools</div>
+          </div>
+          <div class="aws-card amber">
+            <div class="aws-cat">Lambda · CDK CR</div>
+            <div class="aws-name">Runtime CR</div>
+            <div class="aws-detail">Provisions AgentCore<br>Runtime via SDK</div>
+          </div>
+          <div class="aws-card green">
+            <div class="aws-cat">Auth · JWT</div>
+            <div class="aws-name">Amazon Cognito</div>
+            <div class="aws-detail">User Pool · JWT issuance<br>custom:tier claim</div>
+          </div>
+          <div class="aws-card green">
+            <div class="aws-cat">Permissions</div>
+            <div class="aws-name">IAM Roles</div>
+            <div class="aws-detail">Execution roles<br>Trust policies · CDK</div>
+          </div>
+          <div class="aws-card blue">
+            <div class="aws-cat">Secrets · Config</div>
+            <div class="aws-name">Secrets Manager</div>
+            <div class="aws-detail">WeatherAPI · OddsAPI<br>Reddit · F1 credentials</div>
+          </div>
+          <div class="aws-card blue">
+            <div class="aws-cat">Registry · Config</div>
+            <div class="aws-name">ECR + SSM</div>
+            <div class="aws-detail">Container image registry<br>9 SSM parameters</div>
+          </div>
+        </div>
+      </div>
 
-      <div class="aws-card teal">
-        <div class="aws-cat">Bedrock</div>
-        <div class="aws-name">Claude Sonnet 3.5</div>
-        <div class="aws-detail">Root agent (F1FantasyAdvisor)<br>Synthesis + orchestration</div>
-      </div>
-      <div class="aws-card teal">
-        <div class="aws-cat">Bedrock</div>
-        <div class="aws-name">Claude Haiku 3</div>
-        <div class="aws-detail">5 sub-agents<br>Data gathering + submission</div>
-      </div>
-      <div class="aws-card amber">
-        <div class="aws-cat">ECR · SSM</div>
-        <div class="aws-name">Registry + Config</div>
-        <div class="aws-detail">gridwise-agent-runtime image<br>9 SSM parameters</div>
-      </div>
-      <div class="aws-card green">
-        <div class="aws-cat">CDK 2-Stack</div>
-        <div class="aws-name">Foundation + Agent</div>
-        <div class="aws-detail">IAM · Cognito · Secrets · ECR<br>Gateway · Runtime · Lambda</div>
-      </div>
     </div>
   </div>
 
@@ -1021,69 +1043,143 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
     <div class="eyebrow reveal-left d1">Agent Design</div>
     <div class="slide-title reveal-left d2" style="font-size:80px;margin-bottom:24px;">The Multi-Agent Graph</div>
 
-    <div class="agent-tree reveal d3">
-      <!-- Root agent -->
-      <div class="agent-row">
-        <div class="agent-node root">
-          <div class="an-role">Root · Orchestrator</div>
-          <div class="an-name">F1FantasyAdvisor</div>
-          <div class="an-model">Claude 3.5 Sonnet · Bedrock</div>
-          <div class="an-tools">Reads LTM at session start · synthesises recommendation</div>
-        </div>
-        <div style="width:40px;height:1px;background:rgba(255,255,255,0.1);flex-shrink:0"></div>
-        <div style="padding:16px 24px;border:1px solid rgba(16,185,129,0.4);background:rgba(16,185,129,0.06);min-width:240px">
-          <div class="an-role" style="color:#10B981">Memory Service</div>
-          <div class="an-name" style="font-size:24px">AgentCore Memory</div>
-          <div class="an-model">STM: session · LTM: long-term</div>
-        </div>
-      </div>
-      <div class="v-connector" style="margin-left:180px"></div>
+    <div class="reveal d3" style="margin-top:10px;width:100%;height:740px;">
+      <svg viewBox="0 0 1680 700" width="100%" height="100%" style="display:block;overflow:visible">
+        <defs>
+          <style>
+            .sv-role  { font:700 10px/1 'JetBrains Mono',monospace; letter-spacing:.16em; text-transform:uppercase; fill:rgba(240,242,245,0.38); }
+            .sv-role.r{ fill:#E10600; } .sv-role.a{ fill:#FF8700; }
+            .sv-role.g{ fill:#10B981; } .sv-role.t{ fill:#06B6D4; } .sv-role.p{ fill:#8B5CF6; }
+            .sv-name  { font:700 30px/1 'Barlow Condensed',sans-serif; letter-spacing:.02em; text-transform:uppercase; fill:#F0F2F5; }
+            .sv-name.lg{ font-size:34px; }
+            .sv-model { font:400 10px/1 'JetBrains Mono',monospace; letter-spacing:.07em; text-transform:uppercase; fill:rgba(240,242,245,0.47); }
+            .sv-det   { font:400 9px/1 'JetBrains Mono',monospace; letter-spacing:.05em; text-transform:uppercase; fill:rgba(240,242,245,0.27); }
+            .sv-out   { font:700 10px/1 'JetBrains Mono',monospace; letter-spacing:.1em; text-transform:uppercase; fill:#FF8700; }
+            .sv-out.g { fill:#10B981; }
+            .sv-lbl   { font:400 9px/1 'JetBrains Mono',monospace; letter-spacing:.1em; text-transform:uppercase; }
+            .sv-edge  { fill:none; stroke-width:1.5; }
+          </style>
+          <!-- Arrowhead markers -->
+          <marker id="ah"   viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(255,255,255,0.3)"/></marker>
+          <marker id="ah-a" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(255,135,0,0.75)"/></marker>
+          <marker id="ah-g" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(16,185,129,0.75)"/></marker>
+          <marker id="ah-t" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(6,182,212,0.75)"/></marker>
+        </defs>
 
-      <!-- ParallelAgent -->
-      <div class="agent-row">
-        <div style="width:180px;height:1px;background:rgba(255,255,255,0.1);flex-shrink:0"></div>
-        <div class="agent-node parallel">
-          <div class="an-role">Parallel Execution</div>
-          <div class="an-name">DataGathering</div>
-          <div class="an-model">Google ADK ParallelAgent</div>
-          <div class="an-tools">3 sub-agents run concurrently · 15-20s → 5-10s</div>
-        </div>
-      </div>
-      <div class="v-connector" style="margin-left:400px"></div>
+        <!-- ====== EDGES (behind nodes) ====== -->
 
-      <!-- 3 Sub-agents in a row -->
-      <div class="agent-row" style="margin-left:180px;gap:8px;align-items:stretch">
-        <div class="agent-node sub">
-          <div class="an-role">F1 Data</div>
-          <div class="an-name">F1DataAgent</div>
-          <div class="an-model">Claude Haiku · Bedrock</div>
-          <div class="an-tools">OpenF1 · Jolpica API<br>→ writes f1_data</div>
-        </div>
-        <div class="agent-node premium">
-          <div class="an-role">Intelligence · Premium</div>
-          <div class="an-name">IntelAgent</div>
-          <div class="an-model">Claude Haiku · Bedrock</div>
-          <div class="an-tools">Weather · Odds · Reddit<br>→ writes intel</div>
-        </div>
-        <div class="agent-node sub">
-          <div class="an-role">Fantasy Context</div>
-          <div class="an-name">FantasyContext</div>
-          <div class="an-model">Claude Haiku · Bedrock</div>
-          <div class="an-tools">Team · Prices · Chips · Rules<br>→ writes fantasy_context</div>
-        </div>
-      </div>
-      <div class="v-connector" style="margin-left:220px"></div>
+        <!-- Memory → Root: reads LTM on session start (arc above) -->
+        <path class="sv-edge" d="M 1240 155 C 1030 20 646 20 410 155"
+              stroke="rgba(16,185,129,0.5)" stroke-dasharray="6 4" marker-end="url(#ah-g)"/>
+        <text class="sv-lbl" x="828" y="14" text-anchor="middle" fill="rgba(16,185,129,0.48)">reads LTM on session start</text>
 
-      <!-- Submission agent -->
-      <div class="agent-row">
-        <div style="width:220px;height:1px;background:rgba(255,255,255,0.1);flex-shrink:0"></div>
-        <div class="agent-node submit">
-          <div class="an-role">Submission · On Confirm</div>
-          <div class="an-name">SubmissionAgent</div>
-          <div class="an-model">Claude Haiku · Bedrock</div>
-          <div class="an-tools">validate_team → submit_team → write LTM</div>
-        </div>
-      </div>
+        <!-- Root → DataGathering: orchestrates -->
+        <line class="sv-edge" x1="410" y1="152" x2="530" y2="152"
+              stroke="rgba(255,255,255,0.35)" marker-end="url(#ah)"/>
+        <!-- DataGathering → Root: results return (dashed) -->
+        <line class="sv-edge" x1="530" y1="172" x2="410" y2="172"
+              stroke="rgba(255,255,255,0.2)" stroke-dasharray="4 3" marker-end="url(#ah)"/>
+        <text class="sv-lbl" x="470" y="144" text-anchor="middle" fill="rgba(255,255,255,0.3)">orchestrates</text>
+        <text class="sv-lbl" x="470" y="188" text-anchor="middle" fill="rgba(255,255,255,0.18)">results</text>
+
+        <!-- DataGathering → sub-agents: parallel fork -->
+        <path class="sv-edge" d="M 622 290 C 622 370 185 370 185 460"
+              stroke="rgba(255,135,0,0.55)" marker-end="url(#ah-a)"/>
+        <path class="sv-edge" d="M 710 290 C 710 370 555 370 555 460"
+              stroke="rgba(255,135,0,0.55)" marker-end="url(#ah-a)"/>
+        <path class="sv-edge" d="M 798 290 C 798 370 940 370 940 460"
+              stroke="rgba(255,135,0,0.55)" marker-end="url(#ah-a)"/>
+        <text class="sv-lbl" x="710" y="362" text-anchor="middle" fill="rgba(255,135,0,0.4)">parallel dispatch</text>
+
+        <!-- Root → SubmissionAgent: on user confirm (dashed teal) -->
+        <path class="sv-edge" d="M 410 248 C 410 340 1460 340 1460 460"
+              stroke="rgba(6,182,212,0.55)" stroke-dasharray="8 4" marker-end="url(#ah-t)"/>
+        <text class="sv-lbl" x="900" y="332" text-anchor="middle" fill="rgba(6,182,212,0.48)">on user confirm</text>
+
+        <!-- SubmissionAgent → Memory: writes LTM -->
+        <path class="sv-edge" d="M 1460 460 L 1460 290"
+              stroke="rgba(16,185,129,0.55)" marker-end="url(#ah-g)"/>
+        <text class="sv-lbl" x="1492" y="378" fill="rgba(16,185,129,0.5)">writes</text>
+        <text class="sv-lbl" x="1492" y="393" fill="rgba(16,185,129,0.5)">LTM</text>
+
+        <!-- ====== NODES (on top of edges) ====== -->
+
+        <!-- Node 1: F1FantasyAdvisor (root) -->
+        <rect x="20" y="80" width="390" height="210" rx="2"
+              stroke="rgba(225,6,0,0.65)" stroke-width="1.5" fill="rgba(225,6,0,0.09)"/>
+        <text class="sv-role r" x="36" y="104">Root · Orchestrator</text>
+        <text class="sv-name lg" x="36" y="142">F1FantasyAdvisor</text>
+        <text class="sv-model" x="36" y="164">Claude 3.5 Sonnet · Bedrock</text>
+        <text class="sv-det"   x="36" y="183">Reads LTM at session start</text>
+        <text class="sv-det"   x="36" y="198">Streams via AG-UI · SSE protocol</text>
+        <text class="sv-det"   x="36" y="213">Synthesises team recommendation</text>
+        <text class="sv-out"   x="36" y="262">→ TeamRecommendationCard</text>
+
+        <!-- Node 2: DataGathering -->
+        <rect x="530" y="80" width="360" height="210" rx="2"
+              stroke="rgba(255,135,0,0.6)" stroke-width="1.5" fill="rgba(255,135,0,0.09)"/>
+        <text class="sv-role a" x="546" y="104">Parallel Execution</text>
+        <text class="sv-name"   x="546" y="142">DataGathering</text>
+        <text class="sv-model"  x="546" y="164">Google ADK ParallelAgent</text>
+        <text class="sv-det"    x="546" y="183">3 sub-agents run concurrently</text>
+        <text class="sv-det"    x="546" y="198">15–20s serial → 5–10s parallel</text>
+        <text class="sv-det"    x="546" y="213">Aggregates state dict for Root</text>
+
+        <!-- Node 3: AgentCore Memory -->
+        <rect x="1240" y="80" width="420" height="210" rx="2"
+              stroke="rgba(16,185,129,0.6)" stroke-width="1.5" fill="rgba(16,185,129,0.09)"/>
+        <text class="sv-role g" x="1256" y="104">Persistent Memory</text>
+        <text class="sv-name"   x="1256" y="142">AgentCore Memory</text>
+        <text class="sv-model"  x="1256" y="164">AWS Bedrock AgentCore</text>
+        <text class="sv-det"    x="1256" y="183">STM · 30-day session context</text>
+        <text class="sv-det"    x="1256" y="198">LTM · 90-day long-term history</text>
+        <text class="sv-det"    x="1256" y="213">Stores picks, chips, preferences</text>
+
+        <!-- Node 4: F1DataAgent -->
+        <rect x="20" y="460" width="330" height="230" rx="2"
+              stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="rgba(255,255,255,0.04)"/>
+        <text class="sv-role" x="36" y="484">F1 Data</text>
+        <text class="sv-name" x="36" y="518">F1DataAgent</text>
+        <text class="sv-model" x="36" y="540">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"   x="36" y="558">OpenF1 API · race results</text>
+        <text class="sv-det"   x="36" y="572">Jolpica · driver standings</text>
+        <text class="sv-det"   x="36" y="586">Constructor stats · lap data</text>
+        <text class="sv-out"   x="36" y="608">→ state: f1_data</text>
+
+        <!-- Node 5: IntelAgent (premium) -->
+        <rect x="390" y="460" width="330" height="230" rx="2"
+              stroke="rgba(139,92,246,0.5)" stroke-width="1" fill="rgba(139,92,246,0.07)"/>
+        <text class="sv-role p" x="406" y="484">Intelligence · Premium</text>
+        <text class="sv-name"   x="406" y="518">IntelAgent</text>
+        <text class="sv-model"  x="406" y="540">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"    x="406" y="558">WeatherAPI · OddsAPI</text>
+        <text class="sv-det"    x="406" y="572">Reddit r/formula1 sentiment</text>
+        <text class="sv-det"    x="406" y="586">Free tier: weather only</text>
+        <text class="sv-out"    x="406" y="608">→ state: intel</text>
+
+        <!-- Node 6: FantasyContextAgent -->
+        <rect x="760" y="460" width="360" height="230" rx="2"
+              stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="rgba(255,255,255,0.04)"/>
+        <text class="sv-role" x="776" y="484">Fantasy Context</text>
+        <text class="sv-name" x="776" y="518">FantasyContext</text>
+        <text class="sv-model" x="776" y="540">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"   x="776" y="558">Team lineup · Price changes</text>
+        <text class="sv-det"   x="776" y="572">Chip availability · Ruleset</text>
+        <text class="sv-det"   x="776" y="586">Transfer budget + history</text>
+        <text class="sv-out"   x="776" y="608">→ state: fantasy_context</text>
+
+        <!-- Node 7: SubmissionAgent -->
+        <rect x="1260" y="460" width="400" height="230" rx="2"
+              stroke="rgba(6,182,212,0.5)" stroke-width="1" fill="rgba(6,182,212,0.07)"/>
+        <text class="sv-role t" x="1276" y="484">Submission · On Confirm</text>
+        <text class="sv-name"   x="1276" y="518">SubmissionAgent</text>
+        <text class="sv-model"  x="1276" y="540">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"    x="1276" y="558">validate_team tool</text>
+        <text class="sv-det"    x="1276" y="572">submit_team tool</text>
+        <text class="sv-det"    x="1276" y="586">Triggered: user confirmation</text>
+        <text class="sv-out g"  x="1276" y="608">→ writes LTM · persists picks</text>
+
+      </svg>
     </div>
   </div>
 
