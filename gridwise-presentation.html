@@ -438,115 +438,90 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
 }
 
 /* ============================================
-   SLIDE 7 — ACTIVITY FLOW
+   SLIDE 7 — EXECUTION CHAIN (merged)
    ============================================ */
 #s7 .content {
   position:absolute; left:88px; top:110px; right:80px; bottom:70px; z-index:10;
 }
-#s7 .flow-track {
-  display:flex; align-items:flex-start; gap:0;
-  margin-top:20px; flex-wrap:nowrap;
+#s7 .exec-chain {
+  display:flex; flex-direction:column; gap:0; margin-top:8px;
 }
-#s7 .flow-step {
-  display:flex; flex-direction:column; align-items:center;
-  flex:1; min-width:0;
+#s7 .phase-row {
+  display:flex; align-items:stretch; border-top:1px solid var(--border);
 }
-#s7 .flow-box {
-  width:100%; padding:20px 12px;
-  border:1px solid var(--border); background:var(--panel);
-  text-align:center;
+#s7 .phase-row:last-child { border-bottom:1px solid var(--border); }
+#s7 .phase-label {
+  width:148px; flex-shrink:0; display:flex; flex-direction:column;
+  justify-content:center; padding:12px 16px; border-right:2px solid var(--border);
 }
-#s7 .flow-box.key { border-color:var(--red); background:var(--red-glow); }
-#s7 .flow-box.par { border-color:var(--amber); background:var(--amber-glow); }
-#s7 .fn-num {
+#s7 .ph-num {
   font-family:var(--mono); font-size:10px; font-weight:700;
-  letter-spacing:0.15em; color:var(--red); margin-bottom:8px;
-  text-transform:uppercase;
+  letter-spacing:0.2em; color:var(--red); text-transform:uppercase;
 }
-#s7 .flow-box.par .fn-num { color:var(--amber); }
-#s7 .fn-name {
-  font-family:'Barlow Condensed', sans-serif; font-size:24px;
-  font-weight:700; text-transform:uppercase; color:var(--white);
-  line-height:1.1;
+#s7 .ph-name {
+  font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:800;
+  text-transform:uppercase; color:var(--white); line-height:1.0; margin-top:4px;
 }
-#s7 .fn-detail {
-  font-family:var(--mono); font-size:10px; letter-spacing:0.07em;
-  color:var(--muted); text-transform:uppercase; margin-top:6px;
-  line-height:1.4;
+#s7 .phase-content {
+  flex:1; display:flex; align-items:center; padding:14px 18px; gap:0;
+  overflow:hidden;
 }
-#s7 .flow-connector {
-  width:24px; height:2px; background:rgba(255,255,255,0.14); flex-shrink:0; margin-top:38px;
+#s7 .phase-row.par .phase-content {
+  flex-direction:column; align-items:stretch; padding:0;
 }
-
-/* Swim lanes for parallel section */
-#s7 .par-lanes {
-  display:flex; flex-direction:column; gap:8px;
-  width:100%; margin-top:16px;
+/* Actor boxes */
+#s7 .ec-box {
+  padding:10px 14px; border:1px solid var(--border); background:var(--panel);
+  flex-shrink:0; text-align:center; min-width:110px;
 }
-#s7 .par-lane {
-  padding:14px 14px; border:1px solid rgba(255,135,0,0.25);
-  background:rgba(255,135,0,0.05);
+#s7 .ec-box.red   { border-color:var(--red);    background:var(--red-glow); }
+#s7 .ec-box.amber { border-color:var(--amber);  background:var(--amber-glow); }
+#s7 .ec-box.teal  { border-color:var(--teal);   background:rgba(6,182,212,0.08); }
+#s7 .ec-box.green { border-color:var(--green);  background:rgba(16,185,129,0.08); }
+#s7 .ec-box.purple{ border-color:var(--purple); background:rgba(139,92,246,0.08); }
+#s7 .ec-name {
+  font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700;
+  text-transform:uppercase; color:var(--white); line-height:1.0;
 }
-#s7 .pl-name {
-  font-family:'Barlow Condensed', sans-serif; font-size:20px;
-  font-weight:700; text-transform:uppercase; color:var(--amber); line-height:1.0;
-}
-#s7 .pl-tools {
+#s7 .ec-sub {
   font-family:var(--mono); font-size:9px; letter-spacing:0.07em;
-  color:var(--faint); text-transform:uppercase; margin-top:3px;
-}
-
-/* ============================================
-   SLIDE 8 — REQUEST CHAIN
-   ============================================ */
-#s8 .content {
-  position:absolute; left:88px; top:110px; right:80px; bottom:70px; z-index:10;
-}
-#s8 .chain {
-  display:flex; flex-direction:column; gap:0; margin-top:16px;
-  max-width:1500px;
-}
-#s8 .chain-row {
-  display:flex; align-items:center; gap:0; height:72px;
-}
-#s8 .chain-actor {
-  width:260px; flex-shrink:0; padding:12px 16px;
-  border:1px solid var(--border); background:var(--panel);
-  text-align:center;
-}
-#s8 .chain-actor.a-user { border-color:var(--white); }
-#s8 .chain-actor.a-red  { border-color:var(--red);   background:var(--red-glow); }
-#s8 .chain-actor.a-amb  { border-color:var(--amber); background:var(--amber-glow); }
-#s8 .chain-actor.a-pur  { border-color:var(--purple);background:rgba(139,92,246,0.08); }
-#s8 .chain-actor.a-teal { border-color:var(--teal);  background:rgba(6,182,212,0.08); }
-#s8 .ca-name {
-  font-family:'Barlow Condensed', sans-serif; font-size:22px;
-  font-weight:700; text-transform:uppercase; color:var(--white); line-height:1.0;
-}
-#s8 .ca-sub {
-  font-family:var(--mono); font-size:10px; letter-spacing:0.08em;
   color:var(--muted); text-transform:uppercase; margin-top:3px;
 }
-#s8 .chain-arrow {
-  flex:1; display:flex; flex-direction:column; justify-content:center;
-  padding:0 16px; min-width:0;
+/* Arrow connectors */
+#s7 .ec-arr {
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  padding:0 6px; flex-shrink:0; min-width:52px;
 }
-#s8 .ca-line {
-  height:1px; background:rgba(255,255,255,0.18); position:relative; margin:2px 0;
+#s7 .ec-line {
+  width:100%; height:1px; background:rgba(255,255,255,0.18); position:relative;
 }
-#s8 .ca-line::after {
-  content:'▶'; position:absolute; right:-1px; top:-7px;
-  font-size:10px; color:rgba(255,255,255,0.3);
+#s7 .ec-line::after {
+  content:"▶"; position:absolute; right:-4px; top:-7px;
+  font-size:9px; color:rgba(255,255,255,0.3);
 }
-#s8 .ca-label {
-  font-family:var(--mono); font-size:10px; letter-spacing:0.1em;
-  color:var(--faint); text-transform:uppercase; text-align:center; margin-top:2px;
+#s7 .ec-arr.r .ec-line { background:rgba(225,6,0,0.5); }
+#s7 .ec-arr.r .ec-line::after { color:var(--red); }
+#s7 .ec-arr.a .ec-line { background:rgba(255,135,0,0.5); }
+#s7 .ec-arr.a .ec-line::after { color:var(--amber); }
+#s7 .ec-arr.t .ec-line { background:rgba(6,182,212,0.45); }
+#s7 .ec-arr.t .ec-line::after { color:var(--teal); }
+#s7 .ec-lbl {
+  font-family:var(--mono); font-size:8px; letter-spacing:0.07em;
+  color:var(--faint); text-transform:uppercase; margin-top:3px; text-align:center;
+  white-space:nowrap;
 }
-#s8 .ca-label.r { color:var(--red); }
-#s8 .ca-label.a { color:var(--amber); }
-#s8 .chain-divider {
-  height:1px; background:var(--border); margin:4px 0;
+/* Parallel sub-rows */
+#s7 .par-sub {
+  display:flex; align-items:center; padding:10px 18px; gap:0;
+  border-bottom:1px solid rgba(255,135,0,0.1); flex:1;
 }
+#s7 .par-sub:last-child { border-bottom:none; }
+#s7 .par-agent {
+  font-family:var(--mono); font-size:9px; font-weight:700;
+  letter-spacing:0.12em; color:var(--amber); text-transform:uppercase;
+  width:110px; flex-shrink:0;
+}
+#s7 .par-agent.premium { color:var(--purple); }
 
 /* ============================================
    SLIDE 9 — TECHNICAL DECISIONS
@@ -726,7 +701,7 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
   <div class="slide-footer">
     <span>GridWise</span><div class="sf-sep"></div>
     <span class="sf-title">The Problem</span>
-    <span class="sf-num">02 / 10</span>
+    <span class="sf-num">02 / 09</span>
   </div>
 </section>
 
@@ -768,7 +743,7 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
   <div class="slide-footer">
     <span>GridWise</span><div class="sf-sep"></div>
     <span class="sf-title">The Solution</span>
-    <span class="sf-num">03 / 10</span>
+    <span class="sf-num">03 / 09</span>
   </div>
 </section>
 
@@ -929,7 +904,7 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
   <div class="slide-footer">
     <span>GridWise</span><div class="sf-sep"></div>
     <span class="sf-title">System Architecture</span>
-    <span class="sf-num">04 / 10</span>
+    <span class="sf-num">04 / 09</span>
   </div>
 </section>
 
@@ -1028,7 +1003,7 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
   <div class="slide-footer">
     <span>GridWise</span><div class="sf-sep"></div>
     <span class="sf-title">AWS Architecture</span>
-    <span class="sf-num">05 / 10</span>
+    <span class="sf-num">05 / 09</span>
   </div>
 </section>
 
@@ -1044,140 +1019,141 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
     <div class="slide-title reveal-left d2" style="font-size:80px;margin-bottom:24px;">The Multi-Agent Graph</div>
 
     <div class="reveal d3" style="margin-top:10px;width:100%;height:740px;">
-      <svg viewBox="0 0 1680 700" width="100%" height="100%" style="display:block;overflow:visible">
+      <svg viewBox="0 0 1680 720" width="100%" height="100%" style="display:block;overflow:visible">
         <defs>
           <style>
-            .sv-role  { font:700 10px/1 'JetBrains Mono',monospace; letter-spacing:.16em; text-transform:uppercase; fill:rgba(240,242,245,0.38); }
-            .sv-role.r{ fill:#E10600; } .sv-role.a{ fill:#FF8700; }
-            .sv-role.g{ fill:#10B981; } .sv-role.t{ fill:#06B6D4; } .sv-role.p{ fill:#8B5CF6; }
+            .sv-role  { font:700 10px/1 'JetBrains Mono',monospace; letter-spacing:.16em; text-transform:uppercase; }
             .sv-name  { font:700 30px/1 'Barlow Condensed',sans-serif; letter-spacing:.02em; text-transform:uppercase; fill:#F0F2F5; }
-            .sv-name.lg{ font-size:34px; }
             .sv-model { font:400 10px/1 'JetBrains Mono',monospace; letter-spacing:.07em; text-transform:uppercase; fill:rgba(240,242,245,0.47); }
             .sv-det   { font:400 9px/1 'JetBrains Mono',monospace; letter-spacing:.05em; text-transform:uppercase; fill:rgba(240,242,245,0.27); }
             .sv-out   { font:700 10px/1 'JetBrains Mono',monospace; letter-spacing:.1em; text-transform:uppercase; fill:#FF8700; }
-            .sv-out.g { fill:#10B981; }
             .sv-lbl   { font:400 9px/1 'JetBrains Mono',monospace; letter-spacing:.1em; text-transform:uppercase; }
             .sv-edge  { fill:none; stroke-width:1.5; }
           </style>
-          <!-- Arrowhead markers -->
-          <marker id="ah"   viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(255,255,255,0.3)"/></marker>
-          <marker id="ah-a" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(255,135,0,0.75)"/></marker>
-          <marker id="ah-g" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(16,185,129,0.75)"/></marker>
-          <marker id="ah-t" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(6,182,212,0.75)"/></marker>
+          <marker id="s6w" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(255,255,255,0.38)"/></marker>
+          <marker id="s6a" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(255,135,0,0.8)"/></marker>
+          <marker id="s6g" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(16,185,129,0.8)"/></marker>
+          <marker id="s6t" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(6,182,212,0.8)"/></marker>
         </defs>
 
-        <!-- ====== EDGES (behind nodes) ====== -->
+        <!-- ====== HIERARCHY ====== -->
+        <!-- Level 1 (top):    F1FantasyAdvisor (Root)             -->
+        <!-- Level 2 (middle): DataGathering | SubmissionAgent     -->
+        <!-- Side panel:       AgentCore Memory (right column)     -->
+        <!-- Level 3 (bottom): F1DataAgent | IntelAgent | FantasyContext -->
 
-        <!-- Memory → Root: reads LTM on session start (arc above) -->
-        <path class="sv-edge" d="M 1240 155 C 1030 20 646 20 410 155"
-              stroke="rgba(16,185,129,0.5)" stroke-dasharray="6 4" marker-end="url(#ah-g)"/>
-        <text class="sv-lbl" x="828" y="14" text-anchor="middle" fill="rgba(16,185,129,0.48)">reads LTM on session start</text>
+        <!-- ====== EDGES behind nodes ====== -->
 
-        <!-- Root → DataGathering: orchestrates -->
-        <line class="sv-edge" x1="410" y1="152" x2="530" y2="152"
-              stroke="rgba(255,255,255,0.35)" marker-end="url(#ah)"/>
-        <!-- DataGathering → Root: results return (dashed) -->
-        <line class="sv-edge" x1="530" y1="172" x2="410" y2="172"
-              stroke="rgba(255,255,255,0.2)" stroke-dasharray="4 3" marker-end="url(#ah)"/>
-        <text class="sv-lbl" x="470" y="144" text-anchor="middle" fill="rgba(255,255,255,0.3)">orchestrates</text>
-        <text class="sv-lbl" x="470" y="188" text-anchor="middle" fill="rgba(255,255,255,0.18)">results</text>
+        <!-- D: Memory → Root — reads LTM on session start (routed above all boxes) -->
+        <path class="sv-edge" d="M 1415 120 V 10 H 270 V 20"
+              stroke="rgba(16,185,129,0.55)" stroke-dasharray="6 4" marker-end="url(#s6g)"/>
+        <text class="sv-lbl" x="843" y="8" text-anchor="middle" fill="rgba(16,185,129,0.5)">reads LTM on session start</text>
 
-        <!-- DataGathering → sub-agents: parallel fork -->
-        <path class="sv-edge" d="M 622 290 C 622 370 185 370 185 460"
-              stroke="rgba(255,135,0,0.55)" marker-end="url(#ah-a)"/>
-        <path class="sv-edge" d="M 710 290 C 710 370 555 370 555 460"
-              stroke="rgba(255,135,0,0.55)" marker-end="url(#ah-a)"/>
-        <path class="sv-edge" d="M 798 290 C 798 370 940 370 940 460"
-              stroke="rgba(255,135,0,0.55)" marker-end="url(#ah-a)"/>
-        <text class="sv-lbl" x="710" y="362" text-anchor="middle" fill="rgba(255,135,0,0.4)">parallel dispatch</text>
+        <!-- A: Root → DataGathering — orchestrates (vertical down, left lane) -->
+        <line class="sv-edge" x1="255" y1="220" x2="255" y2="310"
+              stroke="rgba(255,255,255,0.4)" marker-end="url(#s6w)"/>
+        <text class="sv-lbl" x="196" y="268" text-anchor="end" fill="rgba(255,255,255,0.35)">orchestrates</text>
 
-        <!-- Root → SubmissionAgent: on user confirm (dashed teal) -->
-        <path class="sv-edge" d="M 410 248 C 410 340 1460 340 1460 460"
-              stroke="rgba(6,182,212,0.55)" stroke-dasharray="8 4" marker-end="url(#ah-t)"/>
-        <text class="sv-lbl" x="900" y="332" text-anchor="middle" fill="rgba(6,182,212,0.48)">on user confirm</text>
+        <!-- B: DataGathering → Root — results return (vertical up, right lane, dashed) -->
+        <line class="sv-edge" x1="285" y1="310" x2="285" y2="220"
+              stroke="rgba(255,255,255,0.22)" stroke-dasharray="4 3" marker-end="url(#s6w)"/>
+        <text class="sv-lbl" x="293" y="268" text-anchor="start" fill="rgba(255,255,255,0.2)">results</text>
 
-        <!-- SubmissionAgent → Memory: writes LTM -->
-        <path class="sv-edge" d="M 1460 460 L 1460 290"
-              stroke="rgba(16,185,129,0.55)" marker-end="url(#ah-g)"/>
-        <text class="sv-lbl" x="1492" y="378" fill="rgba(16,185,129,0.5)">writes</text>
-        <text class="sv-lbl" x="1492" y="393" fill="rgba(16,185,129,0.5)">LTM</text>
+        <!-- C: Root → SubmissionAgent — on confirm (orthogonal: right → gap → down → right → down) -->
+        <path class="sv-edge" d="M 480 120 H 580 V 280 H 840 V 310"
+              stroke="rgba(6,182,212,0.55)" stroke-dasharray="8 4" marker-end="url(#s6t)"/>
+        <text class="sv-lbl" x="672" y="274" text-anchor="middle" fill="rgba(6,182,212,0.5)">on user confirm</text>
 
-        <!-- ====== NODES (on top of edges) ====== -->
+        <!-- E: SubmissionAgent → Memory — writes LTM (horizontal right) -->
+        <line class="sv-edge" x1="1040" y1="402" x2="1170" y2="402"
+              stroke="rgba(16,185,129,0.7)" marker-end="url(#s6g)"/>
+        <text class="sv-lbl" x="1105" y="394" text-anchor="middle" fill="rgba(16,185,129,0.55)">writes LTM</text>
 
-        <!-- Node 1: F1FantasyAdvisor (root) -->
-        <rect x="20" y="80" width="390" height="210" rx="2"
+        <!-- F: DataGathering → sub-agents — parallel bus pattern (all orthogonal) -->
+        <line x1="270" y1="495" x2="270" y2="530" stroke="rgba(255,135,0,0.6)" stroke-width="1.5"/>
+        <line x1="175" y1="530" x2="860" y2="530" stroke="rgba(255,135,0,0.5)" stroke-width="1.5"/>
+        <line class="sv-edge" x1="175" y1="530" x2="175" y2="570" stroke="rgba(255,135,0,0.55)" marker-end="url(#s6a)"/>
+        <line class="sv-edge" x1="505" y1="530" x2="505" y2="570" stroke="rgba(255,135,0,0.55)" marker-end="url(#s6a)"/>
+        <line class="sv-edge" x1="860" y1="530" x2="860" y2="570" stroke="rgba(255,135,0,0.55)" marker-end="url(#s6a)"/>
+        <text class="sv-lbl" x="518" y="546" text-anchor="middle" fill="rgba(255,135,0,0.45)">parallel dispatch</text>
+
+        <!-- ====== NODES ====== -->
+
+        <!-- LEVEL 1: F1FantasyAdvisor (Root) -->
+        <rect x="60" y="20" width="420" height="200" rx="2"
               stroke="rgba(225,6,0,0.65)" stroke-width="1.5" fill="rgba(225,6,0,0.09)"/>
-        <text class="sv-role r" x="36" y="104">Root · Orchestrator</text>
-        <text class="sv-name lg" x="36" y="142">F1FantasyAdvisor</text>
-        <text class="sv-model" x="36" y="164">Claude 3.5 Sonnet · Bedrock</text>
-        <text class="sv-det"   x="36" y="183">Reads LTM at session start</text>
-        <text class="sv-det"   x="36" y="198">Streams via AG-UI · SSE protocol</text>
-        <text class="sv-det"   x="36" y="213">Synthesises team recommendation</text>
-        <text class="sv-out"   x="36" y="262">→ TeamRecommendationCard</text>
+        <text class="sv-role" x="80" y="44" fill="#E10600">Root · Orchestrator</text>
+        <text class="sv-name" x="80" y="82" style="font-size:34px">F1FantasyAdvisor</text>
+        <text class="sv-model" x="80" y="104">Claude 3.5 Sonnet · Bedrock</text>
+        <text class="sv-det"   x="80" y="122">Reads LTM at session start</text>
+        <text class="sv-det"   x="80" y="137">Streams via AG-UI · SSE protocol</text>
+        <text class="sv-det"   x="80" y="152">Synthesises team recommendation</text>
+        <text class="sv-out"   x="80" y="196">→ TeamRecommendationCard</text>
 
-        <!-- Node 2: DataGathering -->
-        <rect x="530" y="80" width="360" height="210" rx="2"
+        <!-- LEVEL 2 LEFT: DataGathering (ParallelAgent) -->
+        <rect x="60" y="310" width="420" height="185" rx="2"
               stroke="rgba(255,135,0,0.6)" stroke-width="1.5" fill="rgba(255,135,0,0.09)"/>
-        <text class="sv-role a" x="546" y="104">Parallel Execution</text>
-        <text class="sv-name"   x="546" y="142">DataGathering</text>
-        <text class="sv-model"  x="546" y="164">Google ADK ParallelAgent</text>
-        <text class="sv-det"    x="546" y="183">3 sub-agents run concurrently</text>
-        <text class="sv-det"    x="546" y="198">15–20s serial → 5–10s parallel</text>
-        <text class="sv-det"    x="546" y="213">Aggregates state dict for Root</text>
+        <text class="sv-role" x="80" y="334" fill="#FF8700">Parallel Execution</text>
+        <text class="sv-name" x="80" y="372">DataGathering</text>
+        <text class="sv-model" x="80" y="394">Google ADK ParallelAgent</text>
+        <text class="sv-det"   x="80" y="412">3 sub-agents run concurrently</text>
+        <text class="sv-det"   x="80" y="427">15–20s serial → 5–10s parallel</text>
+        <text class="sv-det"   x="80" y="442">Writes to session memory; Root reads after</text>
 
-        <!-- Node 3: AgentCore Memory -->
-        <rect x="1240" y="80" width="420" height="210" rx="2"
-              stroke="rgba(16,185,129,0.6)" stroke-width="1.5" fill="rgba(16,185,129,0.09)"/>
-        <text class="sv-role g" x="1256" y="104">Persistent Memory</text>
-        <text class="sv-name"   x="1256" y="142">AgentCore Memory</text>
-        <text class="sv-model"  x="1256" y="164">AWS Bedrock AgentCore</text>
-        <text class="sv-det"    x="1256" y="183">STM · 30-day session context</text>
-        <text class="sv-det"    x="1256" y="198">LTM · 90-day long-term history</text>
-        <text class="sv-det"    x="1256" y="213">Stores picks, chips, preferences</text>
+        <!-- LEVEL 2 RIGHT: SubmissionAgent -->
+        <rect x="640" y="310" width="400" height="185" rx="2"
+              stroke="rgba(6,182,212,0.55)" stroke-width="1" fill="rgba(6,182,212,0.07)"/>
+        <text class="sv-role" x="660" y="334" fill="#06B6D4">Submission · On Confirm</text>
+        <text class="sv-name" x="660" y="372">SubmissionAgent</text>
+        <text class="sv-model" x="660" y="394">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"   x="660" y="412">validate_team tool</text>
+        <text class="sv-det"   x="660" y="427">submit_team tool</text>
+        <text class="sv-out"   x="660" y="468" style="fill:#10B981">→ writes LTM · persists picks</text>
 
-        <!-- Node 4: F1DataAgent -->
-        <rect x="20" y="460" width="330" height="230" rx="2"
+        <!-- SIDE PANEL: AgentCore Memory (right column, tall) -->
+        <rect x="1170" y="120" width="490" height="360" rx="2"
+              stroke="rgba(16,185,129,0.6)" stroke-width="1.5" fill="rgba(16,185,129,0.07)"/>
+        <text class="sv-role" x="1192" y="148" fill="#10B981">Persistent Memory</text>
+        <text class="sv-name" x="1192" y="188">AgentCore Memory</text>
+        <text class="sv-model" x="1192" y="210">AWS Bedrock AgentCore</text>
+        <line x1="1190" y1="226" x2="1650" y2="226" stroke="rgba(16,185,129,0.18)" stroke-width="1"/>
+        <text class="sv-lbl" x="1192" y="246" fill="rgba(16,185,129,0.6)" style="font-weight:700">SESSION MEMORY (STM)</text>
+        <text class="sv-det" x="1192" y="264">30-day session context</text>
+        <text class="sv-det" x="1192" y="279">f1_data · intel · fantasy_context</text>
+        <line x1="1190" y1="296" x2="1650" y2="296" stroke="rgba(16,185,129,0.18)" stroke-width="1"/>
+        <text class="sv-lbl" x="1192" y="316" fill="rgba(16,185,129,0.6)" style="font-weight:700">LONG-TERM MEMORY (LTM)</text>
+        <text class="sv-det" x="1192" y="334">90-day long-term history</text>
+        <text class="sv-det" x="1192" y="349">Accepted picks · chip history</text>
+        <text class="sv-det" x="1192" y="364">Stated preferences · patterns</text>
+
+        <!-- LEVEL 3: Sub-agents (dispatched in parallel by DataGathering) -->
+
+        <!-- F1DataAgent -->
+        <rect x="20" y="570" width="310" height="140" rx="2"
               stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="rgba(255,255,255,0.04)"/>
-        <text class="sv-role" x="36" y="484">F1 Data</text>
-        <text class="sv-name" x="36" y="518">F1DataAgent</text>
-        <text class="sv-model" x="36" y="540">Claude Haiku 3 · Bedrock</text>
-        <text class="sv-det"   x="36" y="558">OpenF1 API · race results</text>
-        <text class="sv-det"   x="36" y="572">Jolpica · driver standings</text>
-        <text class="sv-det"   x="36" y="586">Constructor stats · lap data</text>
-        <text class="sv-out"   x="36" y="608">→ state: f1_data</text>
+        <text class="sv-role" x="40" y="594" fill="rgba(240,242,245,0.38)">F1 Data</text>
+        <text class="sv-name" x="40" y="628" style="font-size:26px">F1DataAgent</text>
+        <text class="sv-model" x="40" y="648">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"   x="40" y="664">OpenF1 API · Jolpica</text>
+        <text class="sv-out"   x="40" y="698">→ state: f1_data</text>
 
-        <!-- Node 5: IntelAgent (premium) -->
-        <rect x="390" y="460" width="330" height="230" rx="2"
+        <!-- IntelAgent (premium) -->
+        <rect x="350" y="570" width="310" height="140" rx="2"
               stroke="rgba(139,92,246,0.5)" stroke-width="1" fill="rgba(139,92,246,0.07)"/>
-        <text class="sv-role p" x="406" y="484">Intelligence · Premium</text>
-        <text class="sv-name"   x="406" y="518">IntelAgent</text>
-        <text class="sv-model"  x="406" y="540">Claude Haiku 3 · Bedrock</text>
-        <text class="sv-det"    x="406" y="558">WeatherAPI · OddsAPI</text>
-        <text class="sv-det"    x="406" y="572">Reddit r/formula1 sentiment</text>
-        <text class="sv-det"    x="406" y="586">Free tier: weather only</text>
-        <text class="sv-out"    x="406" y="608">→ state: intel</text>
+        <text class="sv-role" x="370" y="594" fill="#8B5CF6">Intelligence · Premium</text>
+        <text class="sv-name" x="370" y="628" style="font-size:26px">IntelAgent</text>
+        <text class="sv-model" x="370" y="648">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"   x="370" y="664">Weather · Odds · Reddit</text>
+        <text class="sv-out"   x="370" y="698">→ state: intel</text>
 
-        <!-- Node 6: FantasyContextAgent -->
-        <rect x="760" y="460" width="360" height="230" rx="2"
+        <!-- FantasyContextAgent -->
+        <rect x="680" y="570" width="360" height="140" rx="2"
               stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="rgba(255,255,255,0.04)"/>
-        <text class="sv-role" x="776" y="484">Fantasy Context</text>
-        <text class="sv-name" x="776" y="518">FantasyContext</text>
-        <text class="sv-model" x="776" y="540">Claude Haiku 3 · Bedrock</text>
-        <text class="sv-det"   x="776" y="558">Team lineup · Price changes</text>
-        <text class="sv-det"   x="776" y="572">Chip availability · Ruleset</text>
-        <text class="sv-det"   x="776" y="586">Transfer budget + history</text>
-        <text class="sv-out"   x="776" y="608">→ state: fantasy_context</text>
-
-        <!-- Node 7: SubmissionAgent -->
-        <rect x="1260" y="460" width="400" height="230" rx="2"
-              stroke="rgba(6,182,212,0.5)" stroke-width="1" fill="rgba(6,182,212,0.07)"/>
-        <text class="sv-role t" x="1276" y="484">Submission · On Confirm</text>
-        <text class="sv-name"   x="1276" y="518">SubmissionAgent</text>
-        <text class="sv-model"  x="1276" y="540">Claude Haiku 3 · Bedrock</text>
-        <text class="sv-det"    x="1276" y="558">validate_team tool</text>
-        <text class="sv-det"    x="1276" y="572">submit_team tool</text>
-        <text class="sv-det"    x="1276" y="586">Triggered: user confirmation</text>
-        <text class="sv-out g"  x="1276" y="608">→ writes LTM · persists picks</text>
+        <text class="sv-role" x="700" y="594" fill="rgba(240,242,245,0.38)">Fantasy Context</text>
+        <text class="sv-name" x="700" y="628" style="font-size:26px">FantasyContext</text>
+        <text class="sv-model" x="700" y="648">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"   x="700" y="664">Team · Prices · Rules</text>
+        <text class="sv-out"   x="700" y="698">→ state: fantasy_context</text>
 
       </svg>
     </div>
@@ -1186,213 +1162,139 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
   <div class="slide-footer">
     <span>GridWise</span><div class="sf-sep"></div>
     <span class="sf-title">Agent Graph</span>
-    <span class="sf-num">06 / 10</span>
+    <span class="sf-num">06 / 09</span>
   </div>
 </section>
 
 <!-- ===========================
-     SLIDE 7 — ACTIVITY FLOW
+     SLIDE 7 — EXECUTION CHAIN (merged: activity + request chain)
      =========================== -->
 <section class="slide" id="s7">
   <div class="bg-stripes"></div>
   <div class="red-stripe"></div>
 
   <div class="content">
-    <div class="eyebrow reveal-left d1">Agent Activity</div>
-    <div class="slide-title reveal-left d2" style="font-size:76px;margin-bottom:20px;">How a Recommendation is Built</div>
+    <div class="eyebrow reveal-left d1">End-to-End Flow</div>
+    <div class="slide-title reveal-left d2" style="font-size:72px;margin-bottom:16px;">The Execution Chain</div>
 
-    <div class="flow-track reveal d3">
+    <div class="exec-chain reveal d3">
 
-      <div class="flow-step">
-        <div class="flow-box key">
-          <div class="fn-num">01</div>
-          <div class="fn-name">Session<br>Start</div>
-          <div class="fn-detail">POST /agent/sessions<br>JWT → user_id</div>
+      <!-- Phase 1: Session Init -->
+      <div class="phase-row">
+        <div class="phase-label">
+          <div class="ph-num">01</div>
+          <div class="ph-name">Session<br>Init</div>
+        </div>
+        <div class="phase-content">
+          <div class="ec-box"><div class="ec-name">User</div><div class="ec-sub">Browser</div></div>
+          <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">POST /sessions · Bearer JWT</div></div>
+          <div class="ec-box red"><div class="ec-name">FastAPI</div><div class="ec-sub">JWT → Cognito</div></div>
+          <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">returns</div></div>
+          <div class="ec-box"><div class="ec-name">session_id</div><div class="ec-sub">stored client-side</div></div>
         </div>
       </div>
-      <div class="flow-connector"></div>
 
-      <div class="flow-step">
-        <div class="flow-box">
-          <div class="fn-num">02</div>
-          <div class="fn-name">Read<br>Long-Term<br>Memory</div>
-          <div class="fn-detail">Prior picks<br>chip history<br>preferences</div>
+      <!-- Phase 2: Recommendation Request -->
+      <div class="phase-row">
+        <div class="phase-label">
+          <div class="ph-num">02</div>
+          <div class="ph-name">Rec.<br>Request</div>
+        </div>
+        <div class="phase-content">
+          <div class="ec-box"><div class="ec-name">User</div><div class="ec-sub">sends message</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">AG-UI POST /chat · JWT</div></div>
+          <div class="ec-box red"><div class="ec-name">FastAPI</div><div class="ec-sub">validates JWT</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">SigV4 POST + user JWT</div></div>
+          <div class="ec-box red"><div class="ec-name">AgentCore<br>Runtime</div><div class="ec-sub">AWS · us-east-1</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">starts agent graph</div></div>
+          <div class="ec-box red"><div class="ec-name">Root Agent</div><div class="ec-sub">F1FantasyAdvisor</div></div>
+          <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">reads LTM</div></div>
+          <div class="ec-box green"><div class="ec-name">AgentCore<br>Memory</div><div class="ec-sub">STM + LTM</div></div>
         </div>
       </div>
-      <div class="flow-connector"></div>
 
-      <div class="flow-step" style="flex:2">
-        <div class="flow-box par" style="padding:14px 12px">
-          <div class="fn-num" style="color:var(--amber)">03 — PARALLEL</div>
-          <div class="fn-name" style="font-size:20px">DataGathering</div>
-          <div class="par-lanes" style="margin-top:10px">
-            <div class="par-lane">
-              <div class="pl-name">F1DataAgent</div>
-              <div class="pl-tools">OpenF1 · Jolpica → f1_data</div>
-            </div>
-            <div class="par-lane">
-              <div class="pl-name">IntelAgent</div>
-              <div class="pl-tools">Weather · Odds · Reddit → intel</div>
-            </div>
-            <div class="par-lane">
-              <div class="pl-name">FantasyContext</div>
-              <div class="pl-tools">Team · Prices · Rules → fantasy_context</div>
-            </div>
+      <!-- Phase 3: Parallel Gather -->
+      <div class="phase-row par">
+        <div class="phase-label">
+          <div class="ph-num">03</div>
+          <div class="ph-name">Parallel<br>Gather</div>
+        </div>
+        <div class="phase-content">
+          <div class="par-sub">
+            <div class="par-agent">F1DataAgent</div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">tool call</div></div>
+            <div class="ec-box amber"><div class="ec-name">Gateway</div><div class="ec-sub">JWT tier filter</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">SigV4 invoke</div></div>
+            <div class="ec-box amber"><div class="ec-name">Lambda<br>Proxy</div><div class="ec-sub">SigV4 signs</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">POST /agent/tools/*</div></div>
+            <div class="ec-box"><div class="ec-name">FastAPI<br>Tools</div><div class="ec-sub">11 endpoints</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
+            <div class="ec-box"><div class="ec-name">OpenF1<br>· Jolpica</div><div class="ec-sub">live data</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
+            <div class="ec-box green"><div class="ec-name">f1_data</div><div class="ec-sub">STM</div></div>
+          </div>
+          <div class="par-sub">
+            <div class="par-agent premium">IntelAgent<br><span style="font-size:8px;opacity:0.7">PREMIUM</span></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">tool call</div></div>
+            <div class="ec-box amber"><div class="ec-name">Gateway</div><div class="ec-sub">tier filter</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">SigV4 invoke</div></div>
+            <div class="ec-box amber"><div class="ec-name">Lambda<br>Proxy</div><div class="ec-sub">SigV4 signs</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">POST /agent/tools/*</div></div>
+            <div class="ec-box"><div class="ec-name">FastAPI<br>Tools</div><div class="ec-sub">11 endpoints</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
+            <div class="ec-box purple"><div class="ec-name">Weather<br>Odds Reddit</div><div class="ec-sub">premium APIs</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
+            <div class="ec-box green"><div class="ec-name">intel</div><div class="ec-sub">STM</div></div>
+          </div>
+          <div class="par-sub">
+            <div class="par-agent">FantasyCtx</div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">tool call</div></div>
+            <div class="ec-box amber"><div class="ec-name">Gateway</div><div class="ec-sub">tier filter</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">SigV4 invoke</div></div>
+            <div class="ec-box amber"><div class="ec-name">Lambda<br>Proxy</div><div class="ec-sub">SigV4 signs</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">POST /agent/tools/*</div></div>
+            <div class="ec-box"><div class="ec-name">FastAPI<br>Tools</div><div class="ec-sub">11 endpoints</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
+            <div class="ec-box"><div class="ec-name">F1 Fantasy<br>· MongoDB</div><div class="ec-sub">team + rules</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
+            <div class="ec-box green"><div class="ec-name">fantasy_<br>context</div><div class="ec-sub">STM</div></div>
           </div>
         </div>
       </div>
-      <div class="flow-connector"></div>
 
-      <div class="flow-step">
-        <div class="flow-box key">
-          <div class="fn-num">04</div>
-          <div class="fn-name">Synthesise<br>Picks</div>
-          <div class="fn-detail">Rules-first<br>Budget check<br>DRS strategy</div>
+      <!-- Phase 4: Synthesis -->
+      <div class="phase-row">
+        <div class="phase-label">
+          <div class="ph-num">04</div>
+          <div class="ph-name">Synthesis</div>
         </div>
-      </div>
-      <div class="flow-connector"></div>
-
-      <div class="flow-step">
-        <div class="flow-box">
-          <div class="fn-num">05</div>
-          <div class="fn-name">Display<br>Reco<br>Card</div>
-          <div class="fn-detail">STATE_SNAPSHOT<br>CopilotKit<br>TeamRecoCard</div>
-        </div>
-      </div>
-      <div class="flow-connector"></div>
-
-      <div class="flow-step">
-        <div class="flow-box">
-          <div class="fn-num">06</div>
-          <div class="fn-name">User<br>Confirms</div>
-          <div class="fn-detail">Apply Reco<br>button click<br>AG-UI event</div>
-        </div>
-      </div>
-      <div class="flow-connector"></div>
-
-      <div class="flow-step">
-        <div class="flow-box key">
-          <div class="fn-num">07</div>
-          <div class="fn-name">Validate<br>+ Submit</div>
-          <div class="fn-detail">RuleEngine<br>TeamService<br>Write LTM</div>
+        <div class="phase-content">
+          <div class="ec-box red"><div class="ec-name">Root Agent</div><div class="ec-sub">reads STM</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">check rules · budget</div></div>
+          <div class="ec-box red"><div class="ec-name">Synthesise<br>Picks</div><div class="ec-sub">rules-first</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">STATE_SNAPSHOT</div></div>
+          <div class="ec-box teal"><div class="ec-name">CopilotKit</div><div class="ec-sub">AG-UI SSE</div></div>
+          <div class="ec-arr t"><div class="ec-line"></div><div class="ec-lbl">renders</div></div>
+          <div class="ec-box teal"><div class="ec-name">Team Reco<br>Card</div><div class="ec-sub">User reviews</div></div>
         </div>
       </div>
 
-    </div>
-  </div>
-
-  <div class="slide-footer">
-    <span>GridWise</span><div class="sf-sep"></div>
-    <span class="sf-title">Activity Flow</span>
-    <span class="sf-num">07 / 10</span>
-  </div>
-</section>
-
-<!-- ===========================
-     SLIDE 8 — REQUEST CHAIN
-     =========================== -->
-<section class="slide" id="s8">
-  <div class="bg-stripes"></div>
-  <div class="red-stripe"></div>
-
-  <div class="content">
-    <div class="eyebrow reveal-left d1">End-to-End Flow</div>
-    <div class="slide-title reveal-left d2" style="font-size:72px;margin-bottom:20px;">The Complete Request Chain</div>
-
-    <div class="chain reveal d3" style="max-width:1700px">
-
-      <div class="chain-row">
-        <div class="chain-actor a-user">
-          <div class="ca-name">User</div>
-          <div class="ca-sub">Browser</div>
+      <!-- Phase 5: Confirm & Submit -->
+      <div class="phase-row">
+        <div class="phase-label">
+          <div class="ph-num">05</div>
+          <div class="ph-name">Confirm<br>&amp; Submit</div>
         </div>
-        <div class="chain-arrow">
-          <div class="ca-line"></div>
-          <div class="ca-label">AG-UI POST /chat · Bearer JWT</div>
-        </div>
-        <div class="chain-actor a-red">
-          <div class="ca-name">FastAPI</div>
-          <div class="ca-sub">Python · localhost</div>
-        </div>
-        <div class="chain-arrow">
-          <div class="ca-line"></div>
-          <div class="ca-label r">SigV4 POST + user JWT</div>
-        </div>
-        <div class="chain-actor a-red">
-          <div class="ca-name">AgentCore Runtime</div>
-          <div class="ca-sub">Agent Graph · AWS</div>
-        </div>
-      </div>
-      <div class="chain-divider"></div>
-
-      <div class="chain-row">
-        <div class="chain-actor a-red">
-          <div class="ca-name">AgentCore Runtime</div>
-          <div class="ca-sub">Runs agent graph</div>
-        </div>
-        <div class="chain-arrow">
-          <div class="ca-line"></div>
-          <div class="ca-label r">Tool discovery · JWT tier filter</div>
-        </div>
-        <div class="chain-actor a-red">
-          <div class="ca-name">AgentCore Gateway</div>
-          <div class="ca-sub">11 tools · semantic</div>
-        </div>
-        <div class="chain-arrow">
-          <div class="ca-line"></div>
-          <div class="ca-label a">Invoke (IAM SigV4)</div>
-        </div>
-        <div class="chain-actor a-amb">
-          <div class="ca-name">Lambda Proxy</div>
-          <div class="ca-sub">SigV4 signing</div>
-        </div>
-      </div>
-      <div class="chain-divider"></div>
-
-      <div class="chain-row">
-        <div class="chain-actor a-amb">
-          <div class="ca-name">Lambda Proxy</div>
-          <div class="ca-sub">botocore SigV4Auth</div>
-        </div>
-        <div class="chain-arrow">
-          <div class="ca-line"></div>
-          <div class="ca-label a">SigV4-signed POST /agent/tools/*</div>
-        </div>
-        <div class="chain-actor">
-          <div class="ca-name">FastAPI Tools</div>
-          <div class="ca-sub">11 endpoints · verifies SigV4</div>
-        </div>
-        <div class="chain-arrow">
-          <div class="ca-line"></div>
-          <div class="ca-label">HTTP · API keys from Secrets</div>
-        </div>
-        <div class="chain-actor a-pur">
-          <div class="ca-name">External APIs</div>
-          <div class="ca-sub">OpenF1 · Weather · Odds · Reddit</div>
-        </div>
-      </div>
-      <div class="chain-divider"></div>
-
-      <div class="chain-row">
-        <div class="chain-actor a-red">
-          <div class="ca-name">Root Agent</div>
-          <div class="ca-sub">After all sub-agents complete</div>
-        </div>
-        <div class="chain-arrow">
-          <div class="ca-line"></div>
-          <div class="ca-label">STATE_SNAPSHOT event</div>
-        </div>
-        <div class="chain-actor a-teal">
-          <div class="ca-name">CopilotKit</div>
-          <div class="ca-sub">TeamRecommendationCard</div>
-        </div>
-        <div class="chain-arrow">
-          <div class="ca-line"></div>
-          <div class="ca-label">confirm + submit_team</div>
-        </div>
-        <div class="chain-actor">
-          <div class="ca-name">MongoDB</div>
-          <div class="ca-sub">TeamService · RuleEngine · LTM</div>
+        <div class="phase-content">
+          <div class="ec-box"><div class="ec-name">User</div><div class="ec-sub">clicks Apply</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">AG-UI interrupt</div></div>
+          <div class="ec-box teal"><div class="ec-name">Submission<br>Agent</div><div class="ec-sub">Haiku</div></div>
+          <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">validate_team</div></div>
+          <div class="ec-box"><div class="ec-name">RuleEngine</div><div class="ec-sub">MongoDB rules</div></div>
+          <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">submit_team</div></div>
+          <div class="ec-box"><div class="ec-name">Team<br>Service</div><div class="ec-sub">MongoDB</div></div>
+          <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">accepted picks</div></div>
+          <div class="ec-box green"><div class="ec-name">Write<br>LTM</div><div class="ec-sub">90-day store</div></div>
         </div>
       </div>
 
@@ -1401,10 +1303,11 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
 
   <div class="slide-footer">
     <span>GridWise</span><div class="sf-sep"></div>
-    <span class="sf-title">Request Chain</span>
-    <span class="sf-num">08 / 10</span>
+    <span class="sf-title">Execution Chain</span>
+    <span class="sf-num">07 / 09</span>
   </div>
 </section>
+
 
 <!-- ===========================
      SLIDE 9 — TECH DECISIONS
@@ -1448,7 +1351,7 @@ img,video,canvas,svg { max-width:100%; max-height:100%; }
   <div class="slide-footer">
     <span>GridWise</span><div class="sf-sep"></div>
     <span class="sf-title">Technical Decisions</span>
-    <span class="sf-num">09 / 10</span>
+    <span class="sf-num">08 / 09</span>
   </div>
 </section>
 
