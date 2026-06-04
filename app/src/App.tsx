@@ -10,12 +10,18 @@ import RulesAdmin from '@/pages/RulesAdmin'
 import Login from '@/pages/Login'
 import Register from '@/pages/Register'
 import Advisor from '@/pages/Advisor'
+import { useAuthStore } from '@/stores/authStore'
 
 const agentUrl = `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1'}/agent/chat`
 
 function App() {
+  const token = useAuthStore(state => state.token)
+
   return (
-    <CopilotKit runtimeUrl={agentUrl}>
+    <CopilotKit
+      runtimeUrl={agentUrl}
+      headers={token ? { Authorization: `Bearer ${token}` } : undefined}
+    >
       <BrowserRouter>
         <Routes>
           {/* Public auth routes — no layout chrome */}
