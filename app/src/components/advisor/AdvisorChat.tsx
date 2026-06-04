@@ -34,11 +34,83 @@ export function AdvisorChat({ sessionId }: Props) {
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [recommendation, setRecommendation] = useState<Record<string, unknown> | null>(null)
+  const [isApplying, setIsApplying] = useState(false)
+  const [recommendationApplied, setRecommendationApplied] = useState(false)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages, recommendation])
+
+  const applyRecommendation = async () => {
+    if (isApplying || recommendationApplied) return
+    setIsApplying(true)
+
+    const confirmMsg = "Yes, apply this recommendation and submit my team."
+
+    const userId = crypto.randomUUID()
+    const assistantId = crypto.randomUUID()
+
+    setMessages(prev => [
+      ...prev,
+      { id: userId, role: 'user', content: confirmMsg },
+      { id: assistantId, role: 'assistant', content: '' },
+    ])
+
+    try {
+      const res = await fetch('/api/v1/agent/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+        body: JSON.stringify({
+          threadId: sessionId,
+          runId: crypto.randomUUID(),
+          messages: [{ id: userId, role: 'user', content: confirmMsg }],
+        }),
+      })
+
+      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`)
+
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buf = ''
+      let responseText = ''
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        buf += decoder.decode(value, { stream: true })
+        const lines = buf.split('\n')
+        buf = lines.pop() ?? ''
+
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          try {
+            const evt = JSON.parse(line.slice(6))
+            if (evt.type === 'TEXT_MESSAGE_CONTENT') {
+              responseText += evt.delta
+              setMessages(prev =>
+                prev.map(m =>
+                  m.id === assistantId ? { ...m, content: responseText } : m
+                )
+              )
+            }
+          } catch {/* ignore */}
+        }
+      }
+
+      setRecommendationApplied(true)
+    } catch {
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === assistantId
+            ? { ...m, content: 'Failed to submit recommendation. Please try again.' }
+            : m
+        )
+      )
+    } finally {
+      setIsApplying(false)
+    }
+  }
 
   const send = async () => {
     if (!input.trim() || loading) return
@@ -144,6 +216,8 @@ export function AdvisorChat({ sessionId }: Props) {
             <TeamRecommendationCard
               recommendation={recommendation as Parameters<typeof TeamRecommendationCard>[0]['recommendation']}
               status="complete"
+              onApply={recommendationApplied ? undefined : applyRecommendation}
+              isApplying={isApplying}
             />
           </div>
         )}
