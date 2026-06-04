@@ -221,6 +221,25 @@ wheels = [
 ]
 
 [[package]]
+name = "bedrock-agentcore"
+version = "1.13.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "boto3" },
+    { name = "botocore" },
+    { name = "pydantic" },
+    { name = "starlette" },
+    { name = "typing-extensions" },
+    { name = "urllib3" },
+    { name = "uvicorn" },
+    { name = "websockets" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/17/f7/a3c6680f2c5e940c6c8a1ec78c0b300c5c31e8d7276f189590ec70d00f78/bedrock_agentcore-1.13.0.tar.gz", hash = "sha256:ed93e7fba2c141cd7051a60ab39ded332e23248f74142f504e5173075ae0044b", size = 889506, upload-time = "2026-06-02T19:00:17.009Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/df/c8/583f186d250ac17ac7e76a669da1521f784f8df12758ed9b8a880df67fe1/bedrock_agentcore-1.13.0-py3-none-any.whl", hash = "sha256:50bc59a47e6b82ce93044a31d216186dc94c1d70fc039e092f6be70c5c74cae0", size = 407916, upload-time = "2026-06-02T19:00:15.255Z" },
+]
+
+[[package]]
 name = "boto3"
 version = "1.43.20"
 source = { registry = "https://pypi.org/simple" }
@@ -932,6 +951,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "beanie" },
+    { name = "bedrock-agentcore" },
     { name = "boto3" },
     { name = "fastapi" },
     { name = "google-adk" },
@@ -970,6 +990,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "beanie", specifier = ">=1.24.0" },
+    { name = "bedrock-agentcore", specifier = ">=1.8.0" },
     { name = "boto3", specifier = ">=1.34.0" },
     { name = "fastapi", specifier = ">=0.109.0" },
     { name = "google-adk", specifier = ">=1.0.0" },

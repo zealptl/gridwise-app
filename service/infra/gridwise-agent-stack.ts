@@ -1,10 +1,11 @@
+import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as ssm from 'aws-cdk-lib/aws-ssm';
-import * as apprunner from 'aws-cdk-lib/aws-apprunner';
 import * as cr from 'aws-cdk-lib/custom-resources';
+import { Gateway, GatewayAuthorizer, ToolSchema } from 'aws-cdk-lib/aws-bedrockagentcore';
 
 export class GridwiseAgentStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -13,70 +14,37 @@ export class GridwiseAgentStack extends cdk.Stack {
     // -------------------------------------------------------------------------
     // Import Foundation stack outputs
     // -------------------------------------------------------------------------
-    const fastApiRoleArn       = cdk.Fn.importValue('FastApiRoleArn');
+    const fastApiRoleArn        = cdk.Fn.importValue('FastApiRoleArn');
     const gatewayServiceRoleArn = cdk.Fn.importValue('GatewayServiceRoleArn');
-    const agentRuntimeRoleArn  = cdk.Fn.importValue('AgentRuntimeRoleArn');
-    const userPoolId           = cdk.Fn.importValue('UserPoolId');
-    const userPoolClientId     = cdk.Fn.importValue('UserPoolClientId');
+    const agentRuntimeRoleArn   = cdk.Fn.importValue('AgentRuntimeRoleArn');
+    const userPoolId            = cdk.Fn.importValue('UserPoolId');
+    const userPoolClientId      = cdk.Fn.importValue('UserPoolClientId');
 
     const fastApiRole = iam.Role.fromRoleArn(this, 'ImportedFastApiRole', fastApiRoleArn);
     const gatewayServiceRole = iam.Role.fromRoleArn(this, 'ImportedGatewayServiceRole', gatewayServiceRoleArn);
 
-    // -------------------------------------------------------------------------
-    // App Runner — FastAPI service (task 12)
-    // -------------------------------------------------------------------------
-    const appRunnerService = new apprunner.CfnService(this, 'GridwiseFastApiService', {
-      serviceName: 'gridwise-fastapi',
-      sourceConfiguration: {
-        imageRepository: {
-          imageIdentifier: `${this.account}.dkr.ecr.${this.region}.amazonaws.com/gridwise-fastapi:latest`,
-          imageRepositoryType: 'ECR',
-          imageConfiguration: {
-            port: '8080',
-            runtimeEnvironmentVariables: [
-              { name: 'AWS_REGION', value: this.region },
-              { name: 'ENVIRONMENT', value: 'production' },
-            ],
-          },
-        },
-        autoDeploymentsEnabled: false,
-      },
-      instanceConfiguration: {
-        instanceRoleArn: fastApiRoleArn,
-      },
-      healthCheckConfiguration: {
-        path: '/health',
-        protocol: 'HTTP',
-      },
-    });
-
-    const appRunnerUrl = `https://${appRunnerService.attrServiceUrl}`;
-
-    new cdk.CfnOutput(this, 'AppRunnerUrl', { value: appRunnerUrl });
-
-    new ssm.StringParameter(this, 'FastApiBaseUrlParam', {
+    // App Runner skipped (not available on free tier).
+    // Update /gridwise/service/fastapi-base-url in SSM with your local/ngrok URL when testing.
+    const fastApiBaseUrlParam = new ssm.StringParameter(this, 'FastApiBaseUrlParam', {
       parameterName: '/gridwise/service/fastapi-base-url',
-      stringValue: appRunnerUrl,
+      stringValue: 'http://localhost:8080',
     });
 
-    // -------------------------------------------------------------------------
-    // Lambda — tools proxy with SigV4 signing (task 5)
-    // -------------------------------------------------------------------------
-    const fastApiBaseUrl = ssm.StringParameter.valueForStringParameter(
-      this,
-      '/gridwise/service/fastapi-base-url',
-    );
+    const appRunnerUrl = fastApiBaseUrlParam.stringValue;
 
+    // -------------------------------------------------------------------------
+    // Lambda - tools proxy with SigV4 signing (task 5)
+    // -------------------------------------------------------------------------
     const toolsProxyLambda = new lambda.Function(this, 'GridwiseToolsProxyFn', {
       functionName: 'gridwise-tools-proxy',
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: 'index.handler',
-      code: lambda.Code.fromAsset('../../app/agent/lambda/tools_proxy'),
+      code: lambda.Code.fromAsset('../app/agent/lambda/tools_proxy'),
       timeout: cdk.Duration.seconds(60),
       memorySize: 256,
       role: fastApiRole,
       environment: {
-        FASTAPI_BASE_URL: fastApiBaseUrl,
+        FASTAPI_BASE_URL: appRunnerUrl,
       },
     });
 
@@ -102,7 +70,7 @@ export class GridwiseAgentStack extends cdk.Stack {
       },
       {
         name: 'get_weather',
-        description: 'Fetches a 3-day weather forecast for an F1 circuit location. PREMIUM — requires custom:tier=premium JWT claim.',
+        description: 'Fetches a 3-day weather forecast for an F1 circuit location. PREMIUM - requires custom:tier=premium JWT claim.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -113,12 +81,12 @@ export class GridwiseAgentStack extends cdk.Stack {
       },
       {
         name: 'get_odds',
-        description: 'Fetches current F1 race winner betting odds and converts them to implied win probabilities. PREMIUM — requires custom:tier=premium JWT claim.',
+        description: 'Fetches current F1 race winner betting odds and converts them to implied win probabilities. PREMIUM - requires custom:tier=premium JWT claim.',
         inputSchema: { type: 'object', properties: {}, required: [] },
       },
       {
         name: 'get_reddit_sentiment',
-        description: 'Searches r/formula1 and r/FantasyF1 for community discussion about a race or driver. PREMIUM — requires custom:tier=premium JWT claim.',
+        description: 'Searches r/formula1 and r/FantasyF1 for community discussion about a race or driver. PREMIUM - requires custom:tier=premium JWT claim.',
         inputSchema: {
           type: 'object',
           properties: {
@@ -166,7 +134,7 @@ export class GridwiseAgentStack extends cdk.Stack {
           type: 'object',
           properties: {
             team: { type: 'object', description: 'Full team dict with team_name, drivers, constructors, drs_boost_driver_id, budget_cap' },
-            user_team_count: { type: 'integer', description: 'Number of teams the user has created this season', default: 0 },
+            user_team_count: { type: 'integer', description: 'Number of teams the user has created this season (default 0)' },
           },
           required: ['team'],
         },
@@ -179,7 +147,7 @@ export class GridwiseAgentStack extends cdk.Stack {
           properties: {
             session_state: { type: 'object', description: 'Session state containing user_id' },
             team: { type: 'object', description: 'Validated team dict' },
-            validated: { type: 'boolean', description: 'Must be true — set by validate_team result' },
+            validated: { type: 'boolean', description: 'Must be true - set by validate_team result' },
           },
           required: ['team', 'validated'],
         },
@@ -187,95 +155,27 @@ export class GridwiseAgentStack extends cdk.Stack {
     ];
 
     // -------------------------------------------------------------------------
-    // AgentCore Gateway — CUSTOM_JWT authorizer backed by Cognito OIDC
+    // AgentCore Gateway - L2 construct with CUSTOM_JWT Cognito authorizer
     // -------------------------------------------------------------------------
-    const customResourcePolicy = cr.AwsCustomResourcePolicy.fromStatements([
-      new iam.PolicyStatement({
-        actions: [
-          'bedrock-agentcore:CreateGateway',
-          'bedrock-agentcore:DeleteGateway',
-          'bedrock-agentcore:CreateGatewayTarget',
-          'bedrock-agentcore:DeleteGatewayTarget',
-          'iam:PassRole',
-        ],
-        resources: ['*'],
-      }),
-    ]);
-
     const cognitoDiscoveryUrl = `https://cognito-idp.${this.region}.amazonaws.com/${userPoolId}/.well-known/openid-configuration`;
 
-    const createGateway = new cr.AwsCustomResource(this, 'GridwiseAgentCoreGateway', {
-      installLatestAwsSdk: true,
-      onCreate: {
-        service: 'BedrockAgentCoreControl',
-        action: 'createGateway',
-        parameters: {
-          name: 'gridwise-agent-gateway',
-          roleArn: gatewayServiceRoleArn,
-          protocolType: 'MCP',
-          authorizerType: 'CUSTOM_JWT',
-          authorizerConfiguration: {
-            customJWTAuthorizer: {
-              discoveryUrl: cognitoDiscoveryUrl,
-              allowedClients: [userPoolClientId],
-            },
-          },
-        },
-        physicalResourceId: cr.PhysicalResourceId.fromResponse('gatewayId'),
-      },
-      onDelete: {
-        service: 'BedrockAgentCoreControl',
-        action: 'deleteGateway',
-        parameters: {
-          gatewayIdentifier: new cr.PhysicalResourceIdReference(),
-        },
-      },
-      policy: customResourcePolicy,
+    const gateway = new Gateway(this, 'GridwiseAgentCoreGateway', {
+      gatewayName: 'gridwise-agent-gateway',
+      role: gatewayServiceRole,
+      authorizerConfiguration: GatewayAuthorizer.usingCustomJwt({
+        discoveryUrl: cognitoDiscoveryUrl,
+        allowedClients: [userPoolClientId],
+      }),
     });
 
-    const gatewayId  = createGateway.getResponseField('gatewayId');
-    const gatewayUrl = createGateway.getResponseField('gatewayUrl');
-
-    // -------------------------------------------------------------------------
-    // Gateway Target — Lambda proxy with all 11 inline tool schemas
-    // -------------------------------------------------------------------------
-    const createTarget = new cr.AwsCustomResource(this, 'GridwiseToolsTarget', {
-      installLatestAwsSdk: true,
-      onCreate: {
-        service: 'BedrockAgentCoreControl',
-        action: 'createGatewayTarget',
-        parameters: {
-          gatewayIdentifier: gatewayId,
-          name: 'gridwise-f1-tools',
-          description: 'All GridWise F1 Fantasy agent tools served via FastAPI proxy Lambda',
-          targetConfiguration: {
-            mcp: {
-              lambda: {
-                lambdaArn: toolsProxyLambda.functionArn,
-                toolSchema: {
-                  inlinePayload: INLINE_TOOLS,
-                },
-              },
-            },
-          },
-          credentialProviderConfigurations: [
-            { credentialProviderType: 'GATEWAY_IAM_ROLE' },
-          ],
-        },
-        physicalResourceId: cr.PhysicalResourceId.fromResponse('targetId'),
-      },
-      onDelete: {
-        service: 'BedrockAgentCoreControl',
-        action: 'deleteGatewayTarget',
-        parameters: {
-          gatewayIdentifier: gatewayId,
-          targetIdentifier: new cr.PhysicalResourceIdReference(),
-        },
-      },
-      policy: customResourcePolicy,
+    gateway.addLambdaTarget('GridwiseToolsTarget', {
+      gatewayTargetName: 'gridwise-tools-target',
+      lambdaFunction: toolsProxyLambda,
+      toolSchema: ToolSchema.fromLocalAsset(path.join(__dirname, 'schemas', 'tools.json')),
     });
 
-    createTarget.node.addDependency(createGateway);
+    const gatewayId  = gateway.gatewayId;
+    const gatewayUrl = gateway.gatewayUrl ?? '';
 
     // -------------------------------------------------------------------------
     // AgentCore Runtime Custom Resource (task 11)
@@ -283,15 +183,12 @@ export class GridwiseAgentStack extends cdk.Stack {
     const runtimeCrHandler = new lambda.Function(this, 'RuntimeCrHandler', {
       runtime: lambda.Runtime.PYTHON_3_12,
       handler: 'index.handler',
-      code: lambda.Code.fromAsset('../../app/agent/lambda/runtime_cr'),
+      code: lambda.Code.fromAsset('../app/agent/lambda/runtime_cr'),
       timeout: cdk.Duration.minutes(5),
       role: fastApiRole,
     });
 
-    runtimeCrHandler.addToRolePolicy(new iam.PolicyStatement({
-      actions: ['bedrock-agentcore:CreateAgentRuntime', 'bedrock-agentcore:GetAgentRuntime'],
-      resources: ['*'],
-    }));
+    // AgentCore Runtime permissions live on fastApiRole in GridwiseFoundationStack
 
     const agentRuntimeCr = new cdk.CustomResource(this, 'AgentCoreRuntime', {
       serviceToken: new cr.Provider(this, 'RuntimeCrProvider', {
@@ -300,7 +197,7 @@ export class GridwiseAgentStack extends cdk.Stack {
       properties: {
         ImageUri: `${this.account}.dkr.ecr.${this.region}.amazonaws.com/gridwise-agent-runtime:latest`,
         RuntimeRoleArn: agentRuntimeRoleArn,
-        RuntimeName: 'gridwise-agent-runtime',
+        RuntimeName: 'gridwise_agent_runtime',
       },
     });
 
@@ -326,5 +223,8 @@ export class GridwiseAgentStack extends cdk.Stack {
       stringValue: gatewayUrl,
       description: 'AgentCore Gateway MCP endpoint URL for gateway.py',
     });
+
+    // Memory resources are created via scripts/create_memory_resources.py
+    // (CDK L2 Memory construct causes stuck CREATING state on rollback)
   }
 }
