@@ -112,14 +112,9 @@ class SessionResponse(BaseModel):
 @router.post("/sessions", response_model=SessionResponse)
 async def create_session(user_id: str = Depends(get_current_user)) -> SessionResponse:
     """Creates a session ID for the advisor. Validates Cognito JWT."""
-    try:
-        from app.agent.agents import build_f1_advisor_graph  # noqa: F401
-        session_id = str(uuid.uuid4())
-        logger.info("Created session %s for user %s", session_id, user_id)
-        return SessionResponse(session_id=session_id)
-    except Exception as exc:
-        logger.error("Failed to create session: %s", exc)
-        raise HTTPException(status_code=500, detail="Failed to create agent session") from exc
+    session_id = str(uuid.uuid4())
+    logger.info("Created session %s for user %s", session_id, user_id)
+    return SessionResponse(session_id=session_id)
 
 
 # ---------------------------------------------------------------------------
