@@ -40,6 +40,13 @@ def handler(event, context):
                     Type='String',
                     Overwrite=True,
                 )
+            if runtime_arn:
+                ssm.put_parameter(
+                    Name='/gridwise/agentcore/runtime-arn',
+                    Value=runtime_arn,
+                    Type='String',
+                    Overwrite=True,
+                )
 
             return {
                 'PhysicalResourceId': runtime_arn or runtime_name,
@@ -58,6 +65,13 @@ def handler(event, context):
                 ssm.put_parameter(
                     Name='/gridwise/agentcore/runtime-endpoint',
                     Value=endpoint,
+                    Type='String',
+                    Overwrite=True,
+                )
+            if runtime_arn:
+                ssm.put_parameter(
+                    Name='/gridwise/agentcore/runtime-arn',
+                    Value=runtime_arn,
                     Type='String',
                     Overwrite=True,
                 )

@@ -22,7 +22,7 @@ ORCHESTRATION RULES:
 
 TOOL AVAILABILITY:
 - Free-tier users have access to F1 data tools, fantasy context tools, and submission tools.
-- Premium-tier users additionally have access to intelligence tools (weather, odds, Reddit sentiment).
+- Premium-tier users additionally have access to intelligence tools (weather, odds).
 - If intel data is unavailable (free-tier user), state this and provide a recommendation with reduced confidence based on available data only.
 - Never refuse to provide a recommendation solely because intelligence tools are unavailable.
 
@@ -41,7 +41,7 @@ MEMORY CONTEXT:
 - Before each turn, <PAST_CONVERSATIONS> may be injected with relevant memories from prior sessions.
 - Use these memories to personalise recommendations — reference past preferences and strategies.
 - If <PAST_CONVERSATIONS> is empty, provide a recommendation without prior context.
-- Free-tier users: intelligence tools (weather, odds, Reddit) are unavailable. State this and reduce confidence.
+- Free-tier users: intelligence tools (weather, odds) are unavailable. State this and reduce confidence.
 - Premium-tier users: all 11 tools available.
 """
 
@@ -77,18 +77,17 @@ def _build_intel_agent(gateway):
 
     toolset = gateway.get_toolset_for_agent(
         "intel_agent",
-        "external race intelligence including weather forecast, betting odds, and Reddit community sentiment",
+        "external race intelligence including weather forecast and betting odds",
     )
     return LlmAgent(
         name="IntelAgent",
         model=LiteLlm(model=HAIKU),
-        description="Gathers external intelligence: weather, betting odds, and Reddit sentiment.",
+        description="Gathers external intelligence: weather and betting odds.",
         instruction=(
             "Gather external race intelligence using your available tools. "
             "If you have no tools (free-tier user), write {'available': false, 'reason': 'intelligence tools require premium tier'} "
             "to session memory under key 'intel' and return immediately — this is expected behaviour, not an error. "
-            "If you have tools: call get_weather with the circuit location, get_odds for race winner probabilities, "
-            "and get_reddit_sentiment with the race name. "
+            "If you have tools: call get_weather with the circuit location and get_odds for race winner probabilities. "
             "On individual API failure, include the error under that sub-key and continue. "
             "Write all results to session memory under key 'intel'. "
             "Return a structured JSON summary."

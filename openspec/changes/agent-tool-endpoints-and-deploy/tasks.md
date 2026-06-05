@@ -110,13 +110,13 @@
 ## 13. CDK Stack 2 Deploy
 
 - [x] 13.1 Run `cd service/infra && cdk deploy GridwiseAgentStack` — verify exit code 0 and all outputs present: `AppRunnerUrl`, `AgentCoreRuntimeEndpoint`, `AgentCoreGatewayId`, `AgentCoreGatewayUrl`, `SessionMemoryId` (if CDK Memory available), `LongTermMemoryId` (if CDK Memory available)
-- [ ] 13.2 Verify all 11 tools listed: `aws bedrock-agentcore list-gateway-tools --gateway-id <AgentCoreGatewayId>`
-- [ ] 13.3 Confirm all SSM params written (see SSM Parameters table in design.md)
+- [x] 13.2 Verify all 11 tools listed: `aws bedrock-agentcore list-gateway-tools --gateway-id <AgentCoreGatewayId>`
+- [x] 13.3 Confirm all SSM params written (see SSM Parameters table in design.md)
 
 ## 14. Secret Population
 
-- [ ] 14.1 Copy `secrets.local.env.example` → `secrets.local.env`; populate with real values: `WEATHER_API_KEY`, `ODDS_API_KEY`, `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `F1_USERNAME`, `F1_PASSWORD`
-- [ ] 14.2 Run `scripts/populate-secrets.sh` — verify each of the 4 secrets updated: `aws secretsmanager get-secret-value --secret-id gridwise/weather-api-key` (repeat for each)
+- [x] 14.1 Copy `secrets.local.env.example` → `secrets.local.env`; populate with real values: `WEATHER_API_KEY`, `ODDS_API_KEY`, `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `F1_USERNAME`, `F1_PASSWORD`
+- [x] 14.2 Run `scripts/populate-secrets.sh` — verify each of the 4 secrets updated: `aws secretsmanager get-secret-value --secret-id gridwise/weather-api-key` (repeat for each)
 
 ## 15. gateway.py — Semantic Discovery Rewrite
 
