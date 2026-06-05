@@ -1,8 +1,8 @@
 # GridWise — Project Documentation
 
-> **Prepared:** 2026-06-04  
-> **Branch:** feat/presentation-slides  
-> **Purpose:** Source of truth for slide deck. Every claim is traceable to code or specs.
+> **Updated:** 2026-06-05  
+> **Branch:** main  
+> **Purpose:** Source of truth for architecture. Every claim is traceable to code or CDK stacks.
 
 ---
 
@@ -29,21 +29,23 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │  Browser (React + CopilotKit)                                   │
 │  Pages: Dashboard · Team CRUD · Rules Admin · AI Advisor Chat   │
+│  Deployed: Vercel (gridwise-app.vercel.app)                     │
 └──────────────────────┬──────────────────────────────────────────┘
                        │ HTTPS + JWT (Cognito)
                        ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│  FastAPI Service (Python 3.12)                                  │
+│  CloudFront (HTTPS) → ALB (HTTP/80) → ECS Fargate               │
+│  FastAPI Service (Python 3.12, port 8080)                       │
 │  Routers: drivers · constructors · teams · rules · agent        │
 │  Services: TeamService · RuleEngine · TransferService           │
 │  Agent: agents.py · gateway.py · memory.py · session.py         │
 └──────┬────────────┬──────────────────────────────┬─────────────┘
        │            │                              │
        ▼            ▼                              ▼
-  MongoDB      AWS Cognito              AgentCore Runtime
-  (Teams,      (JWT validation,        (BedrockAgentCoreApp,
-   Rules,       user pool,             runs F1 agent graph,
-   Drivers,     custom:tier)           SigV4-invoked by FastAPI)
+  MongoDB Atlas  AWS Cognito              AgentCore Runtime
+  (cloud-hosted  (JWT validation,        (BedrockAgentCoreApp,
+   Teams, Rules,  user pool,             runs F1 agent graph,
+   Drivers,       custom:tier)           SigV4-invoked by FastAPI)
    Constructors)
                                                │
                                ┌───────────────┴───────────────┐
@@ -62,57 +64,56 @@
               ▼                                   ▼
      External APIs                       GridWise Internal
      (OpenF1, Jolpica,                   (RuleEngine, TeamService,
-      WeatherAPI, Odds API,               MongoDB via FastAPI)
+      WeatherAPI, Odds API,               MongoDB Atlas via FastAPI)
       Reddit, F1 Fantasy API)
 ```
 
 ### AWS Architecture Diagram
 
-> **Note:** React frontend and FastAPI service are run locally / not yet deployed to cloud hosting. Placeholder boxes shown with dashed borders.
+> **Stack deployment order:** `GridwiseFoundationStack` → `GridwiseServiceStack` → `GridwiseAgentStack`
 
 ```mermaid
 graph TB
-    subgraph Client["Client (Local — not yet deployed)"]
-        UI["⬜ React Frontend\n(Vite · CopilotKit)\nlocalhost:5173"]
+    subgraph Vercel["Vercel (CDN)"]
+        UI["React Frontend\n(Vite · CopilotKit)\ngridwise-app.vercel.app"]
     end
 
-    subgraph FastAPI_Box["FastAPI Service (Local — not yet deployed)"]
-        API["⬜ FastAPI\n(Python 3.12)\nlocalhost:8000"]
+    subgraph Atlas["MongoDB Atlas (Cloud)"]
+        MongoDB["MongoDB Atlas\nTeams · Rules · Drivers\nConstructors"]
     end
 
     subgraph AWS["AWS (us-east-1)"]
-        subgraph Auth["Authentication"]
-            Cognito["🔐 Amazon Cognito\nUser Pool\ncustom:tier claim"]
+        subgraph Foundation["GridwiseFoundationStack"]
+            Cognito["Amazon Cognito\nUser Pool\ncustom:tier claim"]
+            Secrets["Secrets Manager\nWeatherAPI · OddsAPI\nReddit · F1 · MongoDB URI"]
+            SSM["SSM Parameter Store\nEndpoints · IDs · ARNs"]
+            Roles["IAM Roles\nfastapi-service-role\ngateway-service-role\nagent-runtime-role\necs-execution-role"]
+            ECR_FastAPI["ECR\ngridwise-fastapi\n(FastAPI image)"]
+            ECR_Runtime["ECR\ngridwise-agent-runtime\n(agent graph image)"]
         end
 
-        subgraph Storage["Storage"]
-            MongoDB["🗄️ MongoDB\n(self-hosted)\nTeams · Rules · Drivers"]
-            Secrets["🔑 Secrets Manager\nWeatherAPI · OddsAPI\nReddit · F1 credentials"]
-            SSM["📋 SSM Parameter Store\nEndpoints · IDs · ARNs"]
+        subgraph Service["GridwiseServiceStack"]
+            CF["CloudFront\nHTTPS distribution\nd1b7z7zmu72yj.cloudfront.net"]
+            ALB["Application Load Balancer\ngridwise-fastapi\nHTTP :80"]
+            ECS["ECS Fargate\ngridwise cluster\nFastAPI container :8080\n512 CPU · 1024 MB"]
         end
 
-        subgraph IAM_box["IAM"]
-            Roles["👤 IAM Roles\nfastapi-service-role\ngateway-service-role\nagent-runtime-role"]
-        end
+        subgraph Agent["GridwiseAgentStack"]
+            subgraph AgentCore["AWS Bedrock AgentCore"]
+                Runtime["AgentCore Runtime\ngridwise_agent_runtime\nBedrockAgentCoreApp\n(F1 advisor graph)"]
+                Gateway["AgentCore Gateway\ngridwise-agent-gateway\nJWT Cognito authoriser\nSemantic tool discovery"]
+                Memory["AgentCore Memory\nSession store 30d\nLong-term store 90d"]
+            end
 
-        subgraph ECR_box["Container Registry"]
-            ECR["📦 ECR\ngridwise-agent-runtime\n(agent graph image)"]
-        end
-
-        subgraph AgentCore["AWS Bedrock AgentCore"]
-            Runtime["🤖 AgentCore Runtime\ngridwise_agent_runtime\nBedrockAgentCoreApp\n(F1 advisor graph)"]
-            Gateway["🔀 AgentCore Gateway\ngridwise-agent-gateway\nJWT Cognito authoriser\nSemantic tool discovery"]
-            Memory["🧠 AgentCore Memory\nSession store 30d\nLong-term store 90d"]
-        end
-
-        subgraph Lambda_box["Lambda"]
-            LambdaProxy["λ gridwise-tools-proxy\nSigV4 signs requests\nGateway → FastAPI"]
-            RuntimeCR["λ RuntimeCrHandler\nCDK Custom Resource\nCreates AgentCore Runtime"]
+            subgraph Lambda_box["Lambda"]
+                LambdaProxy["λ gridwise-tools-proxy\nSigV4 signs requests\nGateway → FastAPI"]
+                RuntimeCR["λ RuntimeCrHandler\nCDK Custom Resource\nCreates AgentCore Runtime"]
+            end
         end
 
         subgraph Bedrock["Amazon Bedrock"]
-            Sonnet["Claude 3.5 Sonnet\n(root agent)"]
-            Haiku["Claude 3 Haiku\n(sub-agents)"]
+            Sonnet["Claude Sonnet 4.5\n(root agent)"]
+            Haiku["Claude Haiku 4.5\n(sub-agents)"]
         end
     end
 
@@ -125,51 +126,58 @@ graph TB
         F1Fantasy["F1 Fantasy API\n(team · prices · chips)"]
     end
 
-    %% User → Frontend → FastAPI
-    UI -->|"HTTPS + JWT"| API
-    API -->|"JWT validation"| Cognito
-    API -->|"team/rule data"| MongoDB
-    API -->|"SigV4 POST\n/api/v1/agent/chat"| Runtime
+    %% User → Vercel → CloudFront → ALB → ECS
+    UI -->|"HTTPS + JWT"| CF
+    CF -->|"HTTP :80"| ALB
+    ALB -->|"HTTP :8080"| ECS
+
+    %% FastAPI (ECS) → AWS services
+    ECS -->|"JWT validation"| Cognito
+    ECS -->|"team/rule data"| MongoDB
+    ECS -->|"get secrets"| Secrets
+    ECS -->|"get params"| SSM
+    ECS -->|"SigV4 POST\n/api/v1/agent/chat"| Runtime
 
     %% AgentCore Runtime → Gateway → Lambda → FastAPI tools
     Runtime -->|"semantic discovery\n+ JWT tier filter"| Gateway
     Runtime <-->|"session + LTM"| Memory
     Gateway -->|"invoke"| LambdaProxy
-    LambdaProxy -->|"SigV4-signed POST\n/api/v1/agent/tools/*"| API
+    LambdaProxy -->|"SigV4-signed POST\n/api/v1/agent/tools/*"| ECS
 
     %% FastAPI tools → external APIs
-    API --> OpenF1
-    API --> Jolpica
-    API --> WeatherAPI
-    API --> OddsAPI
-    API --> Reddit
-    API --> F1Fantasy
-
-    %% Secrets & config
-    API -->|"get secrets"| Secrets
-    API -->|"get params"| SSM
-    Runtime -->|"get params"| SSM
+    ECS --> OpenF1
+    ECS --> Jolpica
+    ECS --> WeatherAPI
+    ECS --> OddsAPI
+    ECS --> Reddit
+    ECS --> F1Fantasy
 
     %% Bedrock models
     Runtime -->|"InvokeModel"| Sonnet
     Runtime -->|"InvokeModel"| Haiku
+    Runtime -->|"get params"| SSM
 
-    %% ECR → Runtime
-    ECR -->|"container image"| Runtime
+    %% ECR → ECS and Runtime
+    ECR_FastAPI -->|"container image"| ECS
+    ECR_Runtime -->|"container image"| Runtime
 
     %% CDK custom resource
     RuntimeCR -->|"creates runtime"| Runtime
 
     %% Styling
-    classDef placeholder fill:#f5f5f5,stroke:#999,stroke-dasharray:5 5,color:#666
+    classDef vercel fill:#000,stroke:#333,color:#fff
+    classDef atlas fill:#00ED64,stroke:#00a847,color:#000
     classDef aws fill:#FF9900,stroke:#c47700,color:#fff
+    classDef service fill:#e65100,stroke:#bf360c,color:#fff
     classDef agentcore fill:#7B2FBE,stroke:#5a1f8c,color:#fff
     classDef bedrock fill:#01A88D,stroke:#017a67,color:#fff
     classDef external fill:#e8f5e9,stroke:#2e7d32,color:#333
     classDef lambda fill:#FF9900,stroke:#c47700,color:#fff
 
-    class UI,API placeholder
-    class Cognito,MongoDB,Secrets,SSM,Roles,ECR aws
+    class UI vercel
+    class MongoDB atlas
+    class Cognito,Secrets,SSM,Roles,ECR_FastAPI,ECR_Runtime aws
+    class CF,ALB,ECS service
     class Runtime,Gateway,Memory agentcore
     class Sonnet,Haiku bedrock
     class OpenF1,Jolpica,WeatherAPI,OddsAPI,Reddit,F1Fantasy external
@@ -178,18 +186,18 @@ graph TB
 
 ### Key Components
 
-| Component | Technology | Responsibility |
-|-----------|-----------|----------------|
-| Frontend | React 19 + TypeScript + Vite | UI, chat interface, team management |
-| API Server | FastAPI + Python 3.12 | Business logic, auth, agent entry point |
-| Database | MongoDB 6 + Beanie ODM | Teams, rules, drivers, constructors |
-| Auth | AWS Cognito | JWT issuance + validation; `custom:tier` claim |
-| Agent Graph | Google ADK + LiteLLM | Multi-agent orchestration, Claude via Bedrock |
-| AgentCore Gateway | AWS Bedrock AgentCore | Tool hosting, JWT-based tier filtering, semantic discovery |
-| AgentCore Runtime | AWS Bedrock AgentCore | Containerised agent execution environment |
-| AgentCore Memory | AWS Bedrock AgentCore | Session-scoped + long-term user memory |
-| Lambda Proxy | Python 3.12 | SigV4-signs Gateway → FastAPI tool calls |
-| Infrastructure | AWS CDK (TypeScript) | Foundation stack (IAM, Cognito, Secrets) + Agent stack |
+| Component | Technology | Where Deployed | Responsibility |
+|-----------|-----------|---------------|----------------|
+| Frontend | React 19 + TypeScript + Vite | Vercel | UI, chat interface, team management |
+| API Server | FastAPI + Python 3.12 | ECS Fargate (behind CloudFront + ALB) | Business logic, auth, agent entry point |
+| Database | MongoDB Atlas + Beanie ODM | MongoDB Atlas (cloud) | Teams, rules, drivers, constructors |
+| Auth | AWS Cognito | AWS (us-east-1) | JWT issuance + validation; `custom:tier` claim |
+| Agent Graph | Google ADK + LiteLLM | AgentCore Runtime container | Multi-agent orchestration, Claude via Bedrock |
+| AgentCore Gateway | AWS Bedrock AgentCore | AWS (us-east-1) | Tool hosting, JWT-based tier filtering, semantic discovery |
+| AgentCore Runtime | AWS Bedrock AgentCore | ECR image (`gridwise-agent-runtime`) | Containerised agent execution environment |
+| AgentCore Memory | AWS Bedrock AgentCore | AWS (us-east-1) | Session-scoped + long-term user memory |
+| Lambda Proxy | Python 3.12 | AWS Lambda | SigV4-signs Gateway → FastAPI tool calls |
+| Infrastructure | AWS CDK (TypeScript) | 3 stacks: Foundation → Service → Agent | IAM, Cognito, Secrets, ECS Fargate, CloudFront, AgentCore |
 
 ---
 
@@ -199,12 +207,12 @@ graph TB
 
 | Agent | Model | Role | Memory |
 |-------|-------|------|--------|
-| `F1FantasyAdvisor` | Claude 3.5 Sonnet (Bedrock) | Root orchestrator; synthesises recommendation | Reads long-term at session start |
+| `F1FantasyAdvisor` | Claude Sonnet 4.5 (Bedrock) | Root orchestrator; synthesises recommendation | Reads long-term at session start |
 | `DataGathering` | — (ParallelAgent) | Runs F1DataAgent, IntelAgent, FantasyContextAgent concurrently | — |
-| `F1DataAgent` | Claude 3 Haiku (Bedrock) | Fetches live session data + historical standings | Writes `f1_data` → short-term memory |
-| `IntelAgent` | Claude 3 Haiku (Bedrock) | Fetches weather, odds, Reddit sentiment (premium) | Writes `intel` → short-term memory |
-| `FantasyContextAgent` | Claude 3 Haiku (Bedrock) | Fetches user team, prices, chips, active rules | Writes `fantasy_context` → short-term memory |
-| `SubmissionAgent` | Claude 3 Haiku (Bedrock) | Validates + submits team; writes accepted pick to long-term memory | Writes `recommendation_accepted` → long-term memory |
+| `F1DataAgent` | Claude Haiku 4.5 (Bedrock) | Fetches live session data + historical standings | Writes `f1_data` → short-term memory |
+| `IntelAgent` | Claude Haiku 4.5 (Bedrock) | Fetches weather, odds, Reddit sentiment (premium) | Writes `intel` → short-term memory |
+| `FantasyContextAgent` | Claude Haiku 4.5 (Bedrock) | Fetches user team, prices, chips, active rules | Writes `fantasy_context` → short-term memory |
+| `SubmissionAgent` | Claude Haiku 4.5 (Bedrock) | Validates + submits team; writes accepted pick to long-term memory | Writes `recommendation_accepted` → long-term memory |
 
 ### 3.2 Activity Diagram
 
@@ -266,9 +274,9 @@ flowchart LR
     end
 
     subgraph DataGathering["DataGathering (ParallelAgent)"]
-        FDA[F1DataAgent\nHaiku]
-        IA[IntelAgent\nHaiku]
-        FCA[FantasyContextAgent\nHaiku]
+        FDA[F1DataAgent\nHaiku 4.5]
+        IA[IntelAgent\nHaiku 4.5]
+        FCA[FantasyContextAgent\nHaiku 4.5]
     end
 
     subgraph STM["AgentCore Short-Term Memory"]
@@ -291,7 +299,7 @@ flowchart LR
     IA -->|write| intl
 
     FF --> FCA
-    MongoDB[(GridWise\nMongoDB)] --> FCA
+    Atlas[(MongoDB Atlas\ncloud-hosted)] --> FCA
     FCA -->|write| fc
 
     LTM -->|session start| Root
@@ -299,9 +307,9 @@ flowchart LR
     intl -->|read| Root
     fc -->|read| Root
 
-    Root[F1FantasyAdvisor\nSonnet\nRoot Agent] -->|display_team_recommendation| CK[CopilotKit\nTeamRecommendationCard]
-    Root -->|delegate on confirm| SA[SubmissionAgent\nHaiku]
-    SA --> MongoDB
+    Root[F1FantasyAdvisor\nSonnet 4.5\nRoot Agent] -->|display_team_recommendation| CK[CopilotKit\nTeamRecommendationCard]
+    Root -->|delegate on confirm| SA[SubmissionAgent\nHaiku 4.5]
+    SA --> Atlas
     SA -->|accepted recommendation| LTM
 ```
 
@@ -636,10 +644,10 @@ data: {"type": "RUN_FINISHED", "threadId": "...", "runId": "..."}
 
 ## 6. Configuration & Environment
 
-### Backend `.env`
+### Backend `.env` (local dev)
 
 ```bash
-# MongoDB
+# MongoDB (Atlas URI injected by ECS Secrets Manager in prod)
 MONGODB_URL=mongodb://localhost:27017
 MONGODB_DB_NAME=gridwise_mvp
 
@@ -649,7 +657,7 @@ COGNITO_APP_CLIENT_ID=xxxxxxxxxx
 AWS_REGION=us-east-1
 AUTH_BYPASS=false       # local dev only — NEVER true in production
 
-# CORS
+# CORS (prod allows Vercel + CloudFront origins)
 BACKEND_CORS_ORIGINS=["http://localhost:5173"]
 
 # AgentCore (populated by CDK / SSM at runtime)
@@ -659,10 +667,16 @@ AGENTCORE_MEMORY_ID=          # falls back to SSM /gridwise/agentcore/memory-id
 AGENTCORE_SESSION_MEMORY_ID=  # falls back to SSM /gridwise/agentcore/session-memory-id
 ```
 
+In production (ECS Fargate), `MONGODB_URL` is injected at container start via `ecs.Secret.fromSecretsManager('gridwise/mongodb-atlas-uri')`.
+
 ### Frontend `.env`
 
 ```bash
+# Local dev
 VITE_API_BASE_URL=http://localhost:8000/api/v1
+
+# Production (Vercel) — points at CloudFront HTTPS endpoint
+VITE_API_BASE_URL=https://d1b7z7zmu72yj.cloudfront.net/api/v1
 ```
 
 ### AWS Secrets Manager
@@ -673,32 +687,41 @@ VITE_API_BASE_URL=http://localhost:8000/api/v1
 | `gridwise/odds-api-key` | The Odds API key |
 | `gridwise/reddit-credentials` | Reddit OAuth client_id + client_secret |
 | `gridwise/f1-credentials` | F1 Fantasy account username + password |
+| `gridwise/mongodb-atlas-uri` | MongoDB Atlas connection URI (injected into ECS as `MONGODB_URL`) |
 
 ### SSM Parameter Store
 
-| Parameter | Value |
-|-----------|-------|
-| `/gridwise/cognito/user-pool-id` | Cognito User Pool ID |
-| `/gridwise/cognito/app-client-id` | Cognito App Client ID |
-| `/gridwise/service/fastapi-base-url` | FastAPI base URL (localhost or App Runner) |
-| `/gridwise/agentcore/gateway-endpoint` | AgentCore Gateway MCP URL |
-| `/gridwise/agentcore/runtime-endpoint` | AgentCore Runtime invocation URL |
-| `/gridwise/agentcore/memory-id` | Long-term memory store ID |
-| `/gridwise/agentcore/session-memory-id` | Session memory store ID |
-| `/gridwise/iam/fastapi-role-arn` | FastAPI IAM role ARN |
-| `/gridwise/iam/agent-runtime-role-arn` | Agent Runtime IAM role ARN |
+| Parameter | Set by | Value |
+|-----------|--------|-------|
+| `/gridwise/cognito/user-pool-id` | GridwiseFoundationStack | Cognito User Pool ID |
+| `/gridwise/cognito/app-client-id` | GridwiseFoundationStack | Cognito App Client ID |
+| `/gridwise/service/fastapi-base-url` | GridwiseServiceStack (CloudFront URL) | FastAPI HTTPS entry point |
+| `/gridwise/agentcore/gateway-endpoint` | GridwiseAgentStack | AgentCore Gateway MCP URL |
+| `/gridwise/agentcore/runtime-endpoint` | GridwiseAgentStack (Custom Resource) | AgentCore Runtime invocation URL |
+| `/gridwise/agentcore/memory-id` | `scripts/create_memory_resources.py` | Long-term memory store ID |
+| `/gridwise/agentcore/session-memory-id` | `scripts/create_memory_resources.py` | Session memory store ID |
+| `/gridwise/iam/fastapi-role-arn` | GridwiseFoundationStack | FastAPI IAM role ARN |
+| `/gridwise/iam/agent-runtime-role-arn` | GridwiseFoundationStack | Agent Runtime IAM role ARN |
 
 ### Infrastructure Stacks
 
+Three CDK stacks must deploy in order (each stack depends on the previous):
+
 ```bash
 cd service/infra
-cdk deploy GridwiseFoundationStack   # IAM, Cognito, Secrets, ECR
-cdk deploy GridwiseAgentStack        # Gateway, Runtime, Lambda proxy
+cdk deploy GridwiseFoundationStack   # IAM, Cognito, Secrets, ECR (2 repos)
+cdk deploy GridwiseServiceStack      # VPC, ECS Fargate, ALB, CloudFront
+cdk deploy GridwiseAgentStack        # Gateway, Runtime (Custom Resource), Lambda proxy
 ```
 
 AgentCore Memory stores are created separately (CDK L2 construct causes stuck state on rollback):
 ```bash
 python scripts/create_memory_resources.py
+```
+
+The `GridwiseAgentStack` reads the FastAPI URL from SSM (`/gridwise/service/fastapi-base-url`). For local dev without the service stack, override it:
+```bash
+aws ssm put-parameter --name /gridwise/service/fastapi-base-url --value <ngrok-url> --overwrite
 ```
 
 ---
@@ -720,27 +743,30 @@ Past picks, chip usage, and stated preferences are persisted only after `submit_
 ### 5. Tier-based tool filtering via Gateway JWT
 The user's Cognito JWT (which carries `custom:tier`) is forwarded to the AgentCore Gateway as a Bearer token. The Gateway uses it to filter which tools are available to each sub-agent via semantic discovery. Free-tier users get 8 tools; premium gets all 11 (weather, odds, Reddit added). If intelligence tools are absent, `IntelAgent` writes `{available: false}` and the root agent degrades gracefully.
 
-### 6. CDK two-stack split
-Infrastructure is split into `GridwiseFoundationStack` (Cognito, IAM, Secrets, ECR) and `GridwiseAgentStack` (Gateway, Runtime, Lambda). Foundation deploys first; Agent stack imports its outputs via `Fn.importValue`. This allows updating agent infrastructure without touching auth/identity resources, and keeps the auth surface stable.
+### 6. CDK three-stack split
+Infrastructure is split into `GridwiseFoundationStack` (Cognito, IAM, Secrets, ECR), `GridwiseServiceStack` (ECS Fargate, ALB, CloudFront), and `GridwiseAgentStack` (Gateway, Runtime, Lambda). Stacks deploy in order via `addDependency`. This isolates auth/identity from service compute from agent infrastructure — updating agent tools doesn't require touching the Cognito User Pool or Fargate service.
 
 ### 7. AgentCore Memory created via script, not CDK
 The CDK L2 `agentcore.Memory` construct causes a stuck `CREATING` state during CloudFormation rollback. Memory resources are created via `scripts/create_memory_resources.py` (idempotent) and their IDs are stored in SSM for runtime lookup.
 
-### 8. SigV4 Lambda proxy for tool calls
+### 8. ECS Fargate + CloudFront instead of App Runner
+App Runner was the original plan but was not available on the free tier. FastAPI is instead deployed on ECS Fargate (512 CPU, 1024 MB) behind an ALB on port 80. A CloudFront distribution sits in front of the ALB to provide a free `*.cloudfront.net` HTTPS domain. The Lambda proxy's `FASTAPI_BASE_URL` is set from SSM at deploy time (`/gridwise/service/fastapi-base-url`).
+
+### 9. SigV4 Lambda proxy for tool calls
 The AgentCore Gateway invokes tools via Lambda, not directly over HTTPS. The Lambda handler uses `botocore.auth.SigV4Auth` to sign each outgoing request with the Lambda execution role's credentials before forwarding to FastAPI's `/agent/tools/*` endpoints. FastAPI verifies the `AWS4-HMAC-SHA256` Authorization header, ensuring only the Gateway can call tool endpoints.
 
-### 9. Strategy pattern for rule engine
+### 10. Strategy pattern for rule engine
 Each rule type has its own validator class inheriting `AbstractRule`. `RuleEngine` loads active rules from MongoDB and instantiates the corresponding validator via a `RULE_VALIDATORS` registry dict. New rule types require only a new class + one registry entry — no changes to the orchestration layer.
 
-### 10. Soft deletes throughout
+### 11. Soft deletes throughout
 Rules and teams are deactivated (`is_active=False`) rather than hard-deleted. This maintains an audit trail, supports recovery, and enables historical analysis without tombstone records.
 
 ---
 
 ## 8. Open Questions / Gaps
 
-### Deployment incomplete (tasks 13–14 in OpenSpec)
-`GridwiseAgentStack` CDK deploy (task 13) and secret population (task 14) are not yet verified. The App Runner construct is commented out with a note that it's not available on the free tier — the `fastapi-base-url` SSM parameter defaults to `http://localhost:8080`. End-to-end testing (task 19) depends on these being completed.
+### GridwiseServiceStack deployed with known issues
+ECS Fargate + ALB + CloudFront (`GridwiseServiceStack`) has been deployed but has known issues. The MongoDB TLS config, Bedrock IAM permissions, and session endpoint wiring were patched in recent commits — verify the `/health` endpoint on the ALB returns 200 before considering the service stable.
 
 ### Tool implementations need live credentials testing
 `intelligence.py` tools (weather, odds, Reddit) and `fantasy.py` F1 Fantasy API tools have not been tested against real API credentials. The tool schemas are complete and endpoints exist, but API-specific edge cases (rate limits, auth token refresh for F1 Fantasy) are unvalidated.
@@ -760,5 +786,5 @@ There are unit tests for the rule validators and some API endpoints, but no inte
 ### `display_team_recommendation` tool not registered in Gateway schemas
 The `STATE_SNAPSHOT` event is triggered when the root agent calls `display_team_recommendation`. This tool is handled client-side by `_adk_event_to_ag_ui()` in `agent.py` — it is not a Gateway-registered tool. It should be documented as an internal ADK function call, not a tool endpoint, to avoid confusion when auditing the Gateway tool list.
 
-### App Runner skipped on free tier
-`gridwise-agent-stack.ts` explicitly notes App Runner is skipped and the FastAPI base URL defaults to `http://localhost:8080`. For production deployment, either App Runner must be re-enabled or an alternative hosting strategy (ECS Fargate, EC2) must be chosen and the Lambda proxy's `FASTAPI_BASE_URL` updated accordingly.
+### CloudFront caches nothing — not suitable for long-term cost control
+`GridwiseServiceStack` sets `cachePolicy: CachePolicy.CACHING_DISABLED` on the CloudFront distribution. This is correct for a dynamic API, but it means every request hits the ALB and Fargate task. There is no static asset offloading or response caching.
