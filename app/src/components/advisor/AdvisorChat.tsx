@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
 import { Loader2, Send } from 'lucide-react'
+import { AgentProgressPanel } from './AgentProgressPanel'
 import { TeamRecommendationCard } from './TeamRecommendationCard'
 
 interface Message {
@@ -38,6 +39,7 @@ export function AdvisorChat({ sessionId }: Props) {
   const [recommendation, setRecommendation] = useState<Record<string, unknown> | null>(null)
   const [isApplying, setIsApplying] = useState(false)
   const [recommendationApplied, setRecommendationApplied] = useState(false)
+  const [agentProgress, setAgentProgress] = useState<Record<string, string> | null>(null)
   const bottomRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -166,11 +168,13 @@ export function AdvisorChat({ sessionId }: Props) {
                   m.id === assistantId ? { ...m, content: m.content + evt.delta } : m
                 )
               )
-            } else if (
-              evt.type === 'STATE_SNAPSHOT' &&
-              evt.snapshot?.display_team_recommendation
-            ) {
-              setRecommendation(evt.snapshot.display_team_recommendation)
+            } else if (evt.type === 'STATE_SNAPSHOT') {
+              if (evt.snapshot?.agentProgress) {
+                setAgentProgress(evt.snapshot.agentProgress)
+              }
+              if (evt.snapshot?.display_team_recommendation) {
+                setRecommendation(evt.snapshot.display_team_recommendation)
+              }
             }
           } catch {/* ignore malformed lines */}
         }
@@ -190,6 +194,8 @@ export function AdvisorChat({ sessionId }: Props) {
 
   return (
     <div className="flex flex-col h-full">
+      <AgentProgressPanel progress={agentProgress as Parameters<typeof AgentProgressPanel>[0]['progress']} />
+
       {/* Message list */}
       <div className="flex-1 overflow-y-auto p-4 space-y-3">
         {messages.map(m => (
