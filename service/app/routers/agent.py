@@ -5,11 +5,6 @@ import json
 import logging
 import os
 import uuid
-import botocore.auth
-import botocore.awsrequest
-import botocore.session
-import urllib.parse
-import urllib.request
 from typing import Any, AsyncGenerator, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Security
@@ -24,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/agent", tags=["agent"])
 
-_bearer = HTTPBearer()
+_bearer = HTTPBearer(auto_error=False)
 
 _SUB_AGENT_PROGRESS_KEYS: dict[str, str] = {
     "F1DataAgent": "f1DataAgent",
@@ -33,7 +28,9 @@ _SUB_AGENT_PROGRESS_KEYS: dict[str, str] = {
 }
 
 
-async def get_raw_jwt(credentials: HTTPAuthorizationCredentials = Security(_bearer)) -> str:
+async def get_raw_jwt(credentials: Optional[HTTPAuthorizationCredentials] = Security(_bearer)) -> str:
+    if not credentials:
+        raise HTTPException(status_code=401, detail="Authorization required")
     return credentials.credentials
 
 
@@ -47,42 +44,48 @@ def _extract_sub(jwt_token: str) -> Optional[str]:
         return None
 
 
-def _get_runtime_endpoint() -> str:
-    if url := os.getenv("AGENTCORE_RUNTIME_ENDPOINT"):
-        return url
+def _get_runtime_arn() -> str:
+    if arn := os.getenv("AGENTCORE_RUNTIME_ARN"):
+        return arn
     try:
         import boto3
         ssm = boto3.client("ssm", region_name=os.getenv("AWS_REGION", "us-east-1"))
-        return ssm.get_parameter(Name="/gridwise/agentcore/runtime-endpoint")["Parameter"]["Value"]
+        return ssm.get_parameter(Name="/gridwise/agentcore/runtime-arn")["Parameter"]["Value"]
     except Exception:
         return ""
 
 
-async def _invoke_runtime(endpoint: str, payload: dict) -> str:
-    """Invoke AgentCore Runtime with SigV4-signed request."""
+async def _invoke_runtime(runtime_arn: str, payload: dict) -> str:
+    """Invoke AgentCore Runtime via boto3 invoke_agent_runtime."""
     import asyncio
+    import boto3
+    from botocore.config import Config
 
-    body = json.dumps(payload).encode()
     region = os.getenv("AWS_REGION", "us-east-1")
+    session_id = payload.get("session_id") or str(uuid.uuid4())
 
     def _sync_invoke():
-        session = botocore.session.get_session()
-        credentials = session.get_credentials().get_frozen_credentials()
-        parsed = urllib.parse.urlparse(endpoint)
-
-        request = botocore.awsrequest.AWSRequest(
-            method="POST",
-            url=endpoint,
-            data=body,
-            headers={"Content-Type": "application/json", "Host": parsed.netloc},
+        client = boto3.client(
+            "bedrock-agentcore",
+            region_name=region,
+            config=Config(read_timeout=120, connect_timeout=10, retries={"max_attempts": 1}),
         )
-        signer = botocore.auth.SigV4Auth(credentials, "bedrock-agentcore", region)
-        signer.add_auth(request)
-
-        req = urllib.request.Request(endpoint, data=body, headers=dict(request.headers), method="POST")
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            result = json.loads(resp.read())
-            return result.get("response", "")
+        resp = client.invoke_agent_runtime(
+            agentRuntimeArn=runtime_arn,
+            runtimeSessionId=session_id,
+            payload=json.dumps(payload).encode("utf-8"),
+        )
+        raw_chunks = []
+        for chunk in resp.get("response", []):
+            raw_chunks.append(chunk.decode("utf-8") if isinstance(chunk, (bytes, bytearray)) else str(chunk))
+        raw = "".join(raw_chunks)
+        try:
+            parsed = json.loads(raw)
+            if isinstance(parsed, list) and parsed:
+                parsed = json.loads(parsed[0]) if isinstance(parsed[0], str) else parsed[0]
+            return parsed.get("response", "") if isinstance(parsed, dict) else str(parsed)
+        except Exception:
+            return raw
 
     loop = asyncio.get_event_loop()
     return await loop.run_in_executor(None, _sync_invoke)
@@ -184,10 +187,10 @@ async def _stream_ag_ui(
     yield _evt({"type": "TEXT_MESSAGE_START", "messageId": msg_id, "role": "assistant"})
 
     try:
-        runtime_endpoint = _get_runtime_endpoint()
+        runtime_endpoint = _get_runtime_arn()
 
         if runtime_endpoint:
-            # Invoke AgentCore Runtime via SigV4
+            # Invoke AgentCore Runtime via boto3
             response_text = await _invoke_runtime(runtime_endpoint, {
                 "prompt": user_message,
                 "user_jwt": user_jwt,

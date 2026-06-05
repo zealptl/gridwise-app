@@ -16,7 +16,7 @@ ROUTES = {
     'get_historical_performance': '/api/v1/agent/tools/get-historical-performance',
     'get_weather': '/api/v1/agent/tools/get-weather',
     'get_odds': '/api/v1/agent/tools/get-odds',
-    'get_reddit_sentiment': '/api/v1/agent/tools/get-reddit-sentiment',
+    # 'get_reddit_sentiment': '/api/v1/agent/tools/get-reddit-sentiment',  # disabled
     'get_user_team': '/api/v1/agent/tools/get-user-team',
     'get_current_prices': '/api/v1/agent/tools/get-current-prices',
     'get_available_chips': '/api/v1/agent/tools/get-available-chips',

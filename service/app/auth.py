@@ -134,12 +134,18 @@ def get_user_tier(jwt_token: str) -> str:
         return "free"
 
 
-security = HTTPBearer()
+security = HTTPBearer(auto_error=False)
 
 
 async def get_current_user(
-    credentials: HTTPAuthorizationCredentials = Security(security),
+    credentials: Optional[HTTPAuthorizationCredentials] = Security(security),
 ) -> str:
     """Validates JWT and returns user_id (Cognito sub claim)."""
+    if not credentials:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Authorization required",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
     token = credentials.credentials
     return await validate_token(token)

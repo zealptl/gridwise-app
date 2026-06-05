@@ -41,7 +41,16 @@
       "Bash(openspec new *)",
       "Bash(openspec status *)",
       "Bash(openspec instructions *)",
-      "Bash(python3 -c ' *)"
+      "Bash(python3 -c ' *)",
+      "Bash(python -c ' *)",
+      "Bash(python3 *)",
+      "Bash(git worktree *)",
+      "Bash(mkdir -p /Users/zealpatel/development/gridwise/gridwise-app-streaming-fallback/openspec/changes/fix-adk-agent-streaming-and-session)",
+      "Bash(cp /Users/zealpatel/development/gridwise/gridwise-app/openspec/changes/fix-adk-agent-streaming-and-session/tasks.md /Users/zealpatel/development/gridwise/gridwise-app-streaming-fallback/openspec/changes/fix-adk-agent-streaming-and-session/tasks.md)",
+      "Bash(cp /Users/zealpatel/development/gridwise/gridwise-app/openspec/changes/fix-adk-agent-streaming-and-session/design.md /Users/zealpatel/development/gridwise/gridwise-app-streaming-fallback/openspec/changes/fix-adk-agent-streaming-and-session/design.md)",
+      "Bash(cp /Users/zealpatel/development/gridwise/gridwise-app/openspec/changes/fix-adk-agent-streaming-and-session/proposal.md /Users/zealpatel/development/gridwise/gridwise-app-streaming-fallback/openspec/changes/fix-adk-agent-streaming-and-session/proposal.md)",
+      "Bash(cp /Users/zealpatel/development/gridwise/gridwise-app/openspec/changes/fix-adk-agent-streaming-and-session/.openspec.yaml /Users/zealpatel/development/gridwise/gridwise-app-streaming-fallback/openspec/changes/fix-adk-agent-streaming-and-session/.openspec.yaml)",
+      "Bash(git *)"
     ]
   }
 }

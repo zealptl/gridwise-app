@@ -133,6 +133,6 @@ async def validate_team_endpoint(body: ValidateTeamBody) -> Any:
 @router.post("/submit-team", dependencies=[Depends(verify_iam_sigv4)])
 async def submit_team_endpoint(body: SubmitTeamBody) -> Any:
     if not body.validated:
-        return {"error": "Team must be validated before submission", "valid": False}
+        raise HTTPException(status_code=422, detail="Team must be validated before submission")
     from app.agent.tools.submission import submit_team
     return await submit_team(body.session_state, body.team)
