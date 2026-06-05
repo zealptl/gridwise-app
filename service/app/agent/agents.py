@@ -10,6 +10,8 @@ logger = logging.getLogger(__name__)
 HAIKU = "bedrock/us.anthropic.claude-haiku-4-5-20251001-v1:0"
 SONNET = "bedrock/us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
+ADVISOR_AGENT_NAME = "F1FantasyAdvisor"
+
 ADVISOR_SYSTEM_PROMPT = """You are the GridWise F1 Fantasy Advisor — an expert AI assistant that helps users optimise their F1 Fantasy team.
 
 ORCHESTRATION RULES:
@@ -25,6 +27,7 @@ TOOL AVAILABILITY:
 - Premium-tier users additionally have access to intelligence tools (weather, odds).
 - If intel data is unavailable (free-tier user), state this and provide a recommendation with reduced confidence based on available data only.
 - Never refuse to provide a recommendation solely because intelligence tools are unavailable.
+- When all three session state keys (f1_data, intel, fantasy_context) have available: false, respond with a clear honest error message explaining data is unavailable. Do NOT produce a team recommendation or hallucinate tool calls.
 
 RULE COMPLIANCE:
 Before proposing any team, read the `rules` field from `fantasy_context` in session memory and verify every pick satisfies all active constraints — budget cap, roster shape, DRS boost requirement, and driver eligibility. Never propose a team that violates an active rule.
@@ -46,14 +49,10 @@ MEMORY CONTEXT:
 """
 
 
-def _build_f1_data_agent(gateway):
+def _build_f1_data_agent(toolset):
     from google.adk.agents import LlmAgent  # type: ignore
     from google.adk.models.lite_llm import LiteLlm  # type: ignore
 
-    toolset = gateway.get_toolset_for_agent(
-        "f1_data_agent",
-        "live F1 session data and historical driver and constructor performance standings",
-    )
     return LlmAgent(
         name="F1DataAgent",
         model=LiteLlm(model=HAIKU),
@@ -71,14 +70,10 @@ def _build_f1_data_agent(gateway):
     )
 
 
-def _build_intel_agent(gateway):
+def _build_intel_agent(toolset):
     from google.adk.agents import LlmAgent  # type: ignore
     from google.adk.models.lite_llm import LiteLlm  # type: ignore
 
-    toolset = gateway.get_toolset_for_agent(
-        "intel_agent",
-        "external race intelligence including weather forecast and betting odds",
-    )
     return LlmAgent(
         name="IntelAgent",
         model=LiteLlm(model=HAIKU),
@@ -96,14 +91,10 @@ def _build_intel_agent(gateway):
     )
 
 
-def _build_fantasy_context_agent(gateway):
+def _build_fantasy_context_agent(toolset):
     from google.adk.agents import LlmAgent  # type: ignore
     from google.adk.models.lite_llm import LiteLlm  # type: ignore
 
-    toolset = gateway.get_toolset_for_agent(
-        "fantasy_context_agent",
-        "user fantasy team, driver and constructor prices, chip availability, and active game rules",
-    )
     return LlmAgent(
         name="FantasyContextAgent",
         model=LiteLlm(model=HAIKU),
@@ -119,20 +110,6 @@ def _build_fantasy_context_agent(gateway):
             "Return a structured JSON summary."
         ),
         tools=toolset or [],
-    )
-
-
-def _build_data_gathering_agent(gateway):
-    from google.adk.agents import ParallelAgent  # type: ignore
-
-    return ParallelAgent(
-        name="DataGathering",
-        description="Runs F1DataAgent, IntelAgent, and FantasyContextAgent concurrently.",
-        sub_agents=[
-            _build_f1_data_agent(gateway),
-            _build_intel_agent(gateway),
-            _build_fantasy_context_agent(gateway),
-        ],
     )
 
 
@@ -212,22 +189,52 @@ def build_f1_advisor_graph(user_jwt: Optional[str] = None, user_id: str = "anony
             logger.warning("after_agent_callback: session persist failed: %s", exc)
 
     gateway = AgentCoreGateway(jwt=user_jwt)
-    data_gathering = _build_data_gathering_agent(gateway)
+
+    f1_toolset = gateway.get_toolset_for_agent(
+        "f1_data_agent",
+        "live F1 session data and historical driver and constructor performance standings",
+    )
+    intel_toolset = gateway.get_toolset_for_agent(
+        "intel_agent",
+        "external race intelligence including weather forecast, betting odds, and Reddit community sentiment",
+    )
+    fantasy_toolset = gateway.get_toolset_for_agent(
+        "fantasy_context_agent",
+        "user fantasy team, driver and constructor prices, chip availability, and active game rules",
+    )
+    tools_available = any(t is not None for t in [f1_toolset, intel_toolset, fantasy_toolset])
+
     submission_agent = _build_submission_agent(gateway)
 
+    if tools_available:
+        from google.adk.agents import ParallelAgent  # type: ignore
+        data_gathering = ParallelAgent(
+            name="DataGathering",
+            description="Runs F1DataAgent, IntelAgent, and FantasyContextAgent concurrently.",
+            sub_agents=[
+                _build_f1_data_agent(f1_toolset),
+                _build_intel_agent(intel_toolset),
+                _build_fantasy_context_agent(fantasy_toolset),
+            ],
+        )
+        advisor_sub_agents = [data_gathering, submission_agent]
+    else:
+        advisor_sub_agents = [submission_agent]
+
     advisor = LlmAgent(
-        name="F1FantasyAdvisor",
+        name=ADVISOR_AGENT_NAME,
         model=LiteLlm(model=SONNET),
         description="Root F1 Fantasy Advisor — orchestrates data gathering and team recommendation.",
         instruction=ADVISOR_SYSTEM_PROMPT,
-        sub_agents=[data_gathering, submission_agent],
+        sub_agents=advisor_sub_agents,
         tools=memory_tools,
         after_agent_callback=_persist_session_callback,
     )
 
     logger.info(
-        "Built F1 Fantasy Advisor agent graph (jwt=%s, user_id=%s)",
+        "Built F1 Fantasy Advisor agent graph (jwt=%s, user_id=%s, tools_available=%s)",
         "present" if user_jwt else "absent",
         user_id,
+        tools_available,
     )
-    return advisor, session_service, memory_svc
+    return advisor, session_service, memory_svc, tools_available

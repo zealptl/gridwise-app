@@ -12,6 +12,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
 
+from app.agent import ADVISOR_AGENT_NAME
 from app.auth import get_current_user
 
 logger = logging.getLogger(__name__)
@@ -19,6 +20,12 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/agent", tags=["agent"])
 
 _bearer = HTTPBearer(auto_error=False)
+
+_SUB_AGENT_PROGRESS_KEYS: dict[str, str] = {
+    "F1DataAgent": "f1DataAgent",
+    "IntelAgent": "intelAgent",
+    "FantasyContextAgent": "fantasyContextAgent",
+}
 
 
 async def get_raw_jwt(credentials: Optional[HTTPAuthorizationCredentials] = Security(_bearer)) -> str:
@@ -199,13 +206,17 @@ async def _stream_ag_ui(
             from google.genai import types as genai_types  # type: ignore
 
             result = build_f1_advisor_graph(user_jwt=user_jwt, user_id=user_id)
-            if isinstance(result, tuple):
+            if isinstance(result, tuple) and len(result) == 4:
+                advisor, session_service, memory_svc, tools_available = result
+            elif isinstance(result, tuple):
                 advisor, session_service, memory_svc = result
+                tools_available = True
             else:
                 advisor = result
                 from google.adk.sessions import InMemorySessionService  # type: ignore
                 session_service = InMemorySessionService()
                 memory_svc = None
+                tools_available = True
 
             runner_kwargs = {"agent": advisor, "app_name": "gridwise", "session_service": session_service}
             if memory_svc:
@@ -216,11 +227,26 @@ async def _stream_ag_ui(
             if session is None:
                 session = await session_service.create_session(app_name="gridwise", user_id=user_id, session_id=thread_id, state={"user_id": user_id})
 
+            if not tools_available:
+                sentinel = {
+                    "f1_data":         {"available": False, "reason": "AgentCore tools unavailable"},
+                    "intel":           {"available": False, "reason": "AgentCore tools unavailable"},
+                    "fantasy_context": {"available": False, "reason": "AgentCore tools unavailable"},
+                }
+                session.state.update(sentinel)
+
             content = genai_types.Content(role="user", parts=[genai_types.Part(text=user_message)])
 
             async for event in runner.run_async(user_id=user_id, session_id=thread_id, new_message=content):
-                for ag_evt in _adk_event_to_ag_ui(event, msg_id, thread_id):
+                author = getattr(event, "author", "")
+                for ag_evt in _adk_event_to_ag_ui(event, msg_id, thread_id, author=author):
                     yield ag_evt
+
+            yield _evt({
+                "type": "STATE_SNAPSHOT",
+                "snapshot": {"agentProgress": {v: "done" for v in _SUB_AGENT_PROGRESS_KEYS.values()}},
+                "threadId": thread_id,
+            })
 
     except HTTPException:
         raise
@@ -235,19 +261,32 @@ async def _stream_ag_ui(
     yield _evt({"type": "RUN_FINISHED", "threadId": thread_id, "runId": run_id})
 
 
-def _adk_event_to_ag_ui(event: Any, msg_id: str, thread_id: str) -> list[str]:
+def _adk_event_to_ag_ui(event: Any, msg_id: str, thread_id: str, author: str = "") -> list[str]:
     """Convert an ADK event to one or more AG-UI SSE data lines."""
     results: list[str] = []
     try:
+        # Sub-agent events → emit progress snapshot, skip text content
+        if author in _SUB_AGENT_PROGRESS_KEYS:
+            progress_key = _SUB_AGENT_PROGRESS_KEYS[author]
+            results.append(_evt({
+                "type": "STATE_SNAPSHOT",
+                "snapshot": {"agentProgress": {progress_key: "working"}},
+                "threadId": thread_id,
+            }))
+            return results
+
         if not hasattr(event, "content") or not event.content:
             return results
+
         for part in event.content.parts:
             if hasattr(part, "text") and part.text:
-                results.append(_evt({
-                    "type": "TEXT_MESSAGE_CONTENT",
-                    "messageId": msg_id,
-                    "delta": part.text,
-                }))
+                # Only emit text from the root advisor agent
+                if author == ADVISOR_AGENT_NAME:
+                    results.append(_evt({
+                        "type": "TEXT_MESSAGE_CONTENT",
+                        "messageId": msg_id,
+                        "delta": part.text,
+                    }))
             elif hasattr(part, "function_call") and part.function_call:
                 fn = part.function_call
                 tool_name = fn.name
