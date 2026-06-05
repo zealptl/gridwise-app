@@ -22,12 +22,12 @@
 
 ## 4. Rewrite Session Service
 
-- [ ] 4.1 Replace the body of `service/app/agent/session.py` with the reference implementation pattern from `aws-agentcore/shared/session.py`, adapting: memory ID loading from env/SSM (keep existing `_load_memory_id` logic), `get_session_service()` factory signature, and `ImportError` guard on `MemoryClient`
-- [ ] 4.2 Implement `_role_for_event(event) -> str` static method: `author == "user"` → `"USER"`, has function responses → `"TOOL"`, non-empty author → `"ASSISTANT"`, else → `"OTHER"`
-- [ ] 4.3 Update `append_event` to call `create_event(messages=[(serialized_event, role)])` using the tuple format
-- [ ] 4.4 Update `create_session` init event to use `messages=[(serialized_init_event, "OTHER")]`
-- [ ] 4.5 Wrap all `MemoryClient` calls in `append_event` and `get_session` with `asyncio.to_thread`
-- [ ] 4.6 Update `delete_session` to iterate and delete individual remote events (matching reference implementation)
+- [x] 4.1 Replace the body of `service/app/agent/session.py` with the reference implementation pattern from `aws-agentcore/shared/session.py`, adapting: memory ID loading from env/SSM (keep existing `_load_memory_id` logic), `get_session_service()` factory signature, and `ImportError` guard on `MemoryClient`
+- [x] 4.2 Implement `_role_for_event(event) -> str` static method: `author == "user"` → `"USER"`, has function responses → `"TOOL"`, non-empty author → `"ASSISTANT"`, else → `"OTHER"`
+- [x] 4.3 Update `append_event` to call `create_event(messages=[(serialized_event, role)])` using the tuple format
+- [x] 4.4 Update `create_session` init event to use `messages=[(serialized_init_event, "OTHER")]`
+- [x] 4.5 Wrap all `MemoryClient` calls in `append_event` and `get_session` with `asyncio.to_thread`
+- [x] 4.6 Update `delete_session` to iterate and delete individual remote events (matching reference implementation)
 
 ## 5. Backend Verification
 
@@ -39,7 +39,7 @@
 
 ## 6. Frontend — Progress Panel Component
 
-- [ ] 6.1 In the frontend (`app/`), create a `AgentProgressPanel` React component that subscribes to the `agentProgress` coagent state via `useCoAgentStateRender`
-- [ ] 6.2 Render a row per agent (F1 Data, Intel, Fantasy Context) with an animated spinner for `"working"` and a checkmark for `"done"`
-- [ ] 6.3 Mount the `AgentProgressPanel` above the `CopilotChat` component in the advisor page
-- [ ] 6.4 Hide the panel when `agentProgress` state is absent or all agents are `"done"` and the advisor has responded
+- [x] 6.1 In the frontend (`app/`), create a `AgentProgressPanel` React component that subscribes to the `agentProgress` coagent state via `useCoAgentStateRender`
+- [x] 6.2 Render a row per agent (F1 Data, Intel, Fantasy Context) with an animated spinner for `"working"` and a checkmark for `"done"`
+- [x] 6.3 Mount the `AgentProgressPanel` above the `CopilotChat` component in the advisor page
+- [x] 6.4 Hide the panel when `agentProgress` state is absent or all agents are `"done"` and the advisor has responded
