@@ -1,24 +1,24 @@
 ## 1. Define Agent Name Constant
 
-- [ ] 1.1 Add `ADVISOR_AGENT_NAME = "F1FantasyAdvisor"` as a module-level constant in `service/app/agent/agents.py`
-- [ ] 1.2 Replace the `name="F1FantasyAdvisor"` string literal in the `LlmAgent` constructor with the new constant
-- [ ] 1.3 Export the constant from `service/app/agent/__init__.py` so the router can import it
+- [x] 1.1 Add `ADVISOR_AGENT_NAME = "F1FantasyAdvisor"` as a module-level constant in `service/app/agent/agents.py`
+- [x] 1.2 Replace the `name="F1FantasyAdvisor"` string literal in the `LlmAgent` constructor with the new constant
+- [x] 1.3 Export the constant from `service/app/agent/__init__.py` so the router can import it
 
 ## 2. Fix Event Streaming — Filter by Author
 
-- [ ] 2.1 In `service/app/routers/agent.py`, import `ADVISOR_AGENT_NAME` from `app.agent`
-- [ ] 2.2 Refactor `_adk_event_to_ag_ui` to accept the event author and return `TEXT_MESSAGE_CONTENT` only when `event.author == ADVISOR_AGENT_NAME`
-- [ ] 2.3 For sub-agent events (author in known sub-agent names), emit a `STATE_SNAPSHOT` with `agentProgress.<agentKey>` set to `"working"`
-- [ ] 2.4 Define the sub-agent name → `agentProgress` key mapping (e.g., `"F1DataAgent"` → `"f1DataAgent"`) as a module-level dict in `routers/agent.py`
-- [ ] 2.5 Emit a final `STATE_SNAPSHOT` with all sub-agent keys set to `"done"` after the `runner.run_async` loop completes successfully
+- [x] 2.1 In `service/app/routers/agent.py`, import `ADVISOR_AGENT_NAME` from `app.agent`
+- [x] 2.2 Refactor `_adk_event_to_ag_ui` to accept the event author and return `TEXT_MESSAGE_CONTENT` only when `event.author == ADVISOR_AGENT_NAME`
+- [x] 2.3 For sub-agent events (author in known sub-agent names), emit a `STATE_SNAPSHOT` with `agentProgress.<agentKey>` set to `"working"`
+- [x] 2.4 Define the sub-agent name → `agentProgress` key mapping (e.g., `"F1DataAgent"` → `"f1DataAgent"`) as a module-level dict in `routers/agent.py`
+- [x] 2.5 Emit a final `STATE_SNAPSHOT` with all sub-agent keys set to `"done"` after the `runner.run_async` loop completes successfully
 
 ## 3. No-Tools Fallback — Sentinel State Injection
 
-- [ ] 3.1 In `build_f1_advisor_graph` in `agents.py`, collect the toolset result for each sub-agent and check if all are `None`
-- [ ] 3.2 When all toolsets are `None`, skip constructing the `DataGathering` `ParallelAgent` and set a flag `tools_available = False`
-- [ ] 3.3 In `_stream_ag_ui` in `routers/agent.py`, after session creation and before `runner.run_async`, check `tools_available`; if `False`, call `session.state.update(sentinel)` with the sentinel dict for all three data keys
-- [ ] 3.4 Update `ADVISOR_SYSTEM_PROMPT` in `agents.py` to add an explicit instruction: when all three session state keys are `available: false`, respond with a clear error message and do not produce a team recommendation
-- [ ] 3.5 When `tools_available = False`, omit the `DataGathering` agent from the advisor's `sub_agents` list so it does not attempt to delegate
+- [x] 3.1 In `build_f1_advisor_graph` in `agents.py`, collect the toolset result for each sub-agent and check if all are `None`
+- [x] 3.2 When all toolsets are `None`, skip constructing the `DataGathering` `ParallelAgent` and set a flag `tools_available = False`
+- [x] 3.3 In `_stream_ag_ui` in `routers/agent.py`, after session creation and before `runner.run_async`, check `tools_available`; if `False`, call `session.state.update(sentinel)` with the sentinel dict for all three data keys
+- [x] 3.4 Update `ADVISOR_SYSTEM_PROMPT` in `agents.py` to add an explicit instruction: when all three session state keys are `available: false`, respond with a clear error message and do not produce a team recommendation
+- [x] 3.5 When `tools_available = False`, omit the `DataGathering` agent from the advisor's `sub_agents` list so it does not attempt to delegate
 
 ## 4. Rewrite Session Service
 
@@ -39,7 +39,7 @@
 
 ## 6. Frontend — Progress Panel Component
 
-- [ ] 6.1 In the frontend (`app/`), create a `AgentProgressPanel` React component that subscribes to the `agentProgress` coagent state via `useCoAgentStateRender`
-- [ ] 6.2 Render a row per agent (F1 Data, Intel, Fantasy Context) with an animated spinner for `"working"` and a checkmark for `"done"`
-- [ ] 6.3 Mount the `AgentProgressPanel` above the `CopilotChat` component in the advisor page
-- [ ] 6.4 Hide the panel when `agentProgress` state is absent or all agents are `"done"` and the advisor has responded
+- [x] 6.1 In the frontend (`app/`), create a `AgentProgressPanel` React component that subscribes to the `agentProgress` coagent state via `useCoAgentStateRender`
+- [x] 6.2 Render a row per agent (F1 Data, Intel, Fantasy Context) with an animated spinner for `"working"` and a checkmark for `"done"`
+- [x] 6.3 Mount the `AgentProgressPanel` above the `CopilotChat` component in the advisor page
+- [x] 6.4 Hide the panel when `agentProgress` state is absent or all agents are `"done"` and the advisor has responded
