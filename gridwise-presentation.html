@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridWise — AI-Powered F1 Fantasy Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800;900&family=Barlow:wght@400;500;700;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* ============================================
+   VIEWPORT BASE CSS — MANDATORY
+   Fixed 1920×1080 stage scaled to viewport
+   ============================================ */
+html, body { width:100%; height:100%; margin:0; overflow:hidden; background:var(--stage-bg,#0D1017); }
+.deck-viewport { position:fixed; inset:0; overflow:hidden; background:var(--stage-bg,#0D1017); }
+.deck-stage { position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:hidden; transform-origin:0 0; }
+.slide { position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; display:block; visibility:hidden; opacity:0; pointer-events:none; background:var(--bg); }
+.slide.active, .slide.visible { visibility:visible; opacity:1; pointer-events:auto; z-index:1; }
+img,video,canvas,svg { max-width:100%; max-height:100%; }
+.deck-controls { position:fixed; left:50%; bottom:16px; transform:translateX(-50%); z-index:1000; display:flex; gap:6px; }
+.deck-controls button { background:rgba(255,255,255,0.12); border:none; color:#fff; padding:6px 14px; font-family:'JetBrains Mono',monospace; font-size:12px; letter-spacing:0.1em; cursor:pointer; transition:background 0.2s; }
+.deck-controls button:hover { background:rgba(255,255,255,0.22); }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:0.01ms !important; transition-duration:0.2s !important; } }
+
+/* ============================================
+   DESIGN TOKENS — F1 RACE CONTROL
+   ============================================ */
+:root {
+  --bg: #0D1017;
+  --stage-bg: #0D1017;
+  --red: #E10600;
+  --red-glow: rgba(225,6,0,0.12);
+  --amber: #FF8700;
+  --amber-glow: rgba(255,135,0,0.12);
+  --purple: #8B5CF6;
+  --teal: #06B6D4;
+  --green: #10B981;
+  --blue: #3B82F6;
+  --white: #F0F2F5;
+  --muted: rgba(240,242,245,0.55);
+  --faint: rgba(240,242,245,0.18);
+  --panel: rgba(255,255,255,0.04);
+  --border: rgba(255,255,255,0.09);
+  --mono: 'JetBrains Mono', monospace;
+  --expo: cubic-bezier(0.22,1,0.36,1);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+
+/* ============================================
+   REVEAL ANIMATION SYSTEM
+   Triggered when .visible is added to .slide
+   ============================================ */
+.reveal      { opacity:0; transform:translateY(24px);  transition:opacity 0.55s var(--expo), transform 0.55s var(--expo); }
+.reveal-left { opacity:0; transform:translateX(-32px); transition:opacity 0.55s var(--expo), transform 0.55s var(--expo); }
+.reveal-up   { opacity:0; transform:translateY(32px);  transition:opacity 0.55s var(--expo), transform 0.55s var(--expo); }
+.reveal-scale{ opacity:0; transform:scale(0.94);       transition:opacity 0.5s var(--expo),  transform 0.5s var(--expo); }
+.slide.visible .reveal,
+.slide.visible .reveal-left,
+.slide.visible .reveal-up,
+.slide.visible .reveal-scale { opacity:1; transform:none; }
+/* Stagger delays */
+.d1{transition-delay:0.08s} .d2{transition-delay:0.18s} .d3{transition-delay:0.28s}
+.d4{transition-delay:0.38s} .d5{transition-delay:0.48s} .d6{transition-delay:0.58s}
+.d7{transition-delay:0.68s} .d8{transition-delay:0.78s}
+
+/* ============================================
+   SHARED SLIDE COMPONENTS
+   ============================================ */
+
+/* Left red accent stripe — on every slide */
+.red-stripe {
+  position:absolute; left:0; top:0; bottom:0; width:8px;
+  background:var(--red); z-index:20;
+}
+
+/* Diagonal background texture */
+.bg-stripes {
+  position:absolute; inset:0; z-index:0;
+  background: repeating-linear-gradient(
+    -45deg, transparent 0px, transparent 36px,
+    rgba(255,255,255,0.015) 36px, rgba(255,255,255,0.015) 40px
+  );
+}
+
+/* Bottom footer bar */
+.slide-footer {
+  position:absolute; bottom:0; left:0; right:0; height:48px; z-index:20;
+  background:rgba(0,0,0,0.4); border-top:1px solid rgba(255,255,255,0.06);
+  display:flex; align-items:center; padding:0 48px; gap:32px;
+  font-family:var(--mono); font-size:12px; letter-spacing:0.14em;
+  color:rgba(240,242,245,0.35); text-transform:uppercase;
+}
+.slide-footer .sf-title { color:rgba(240,242,245,0.6); font-weight:500; }
+.slide-footer .sf-num  { margin-left:auto; }
+.slide-footer .sf-sep  { width:1px; height:16px; background:rgba(255,255,255,0.12); }
+
+/* Red bottom bar (title + closing slides) */
+.footer-red {
+  position:absolute; bottom:0; left:0; right:0; height:52px; z-index:20;
+  background:var(--red);
+  display:flex; align-items:center; padding:0 48px; gap:40px;
+  font-family:var(--mono); font-size:12px; font-weight:700;
+  letter-spacing:0.14em; color:#fff; text-transform:uppercase;
+}
+.footer-red .fr-sep { width:1px; height:20px; background:rgba(255,255,255,0.3); }
+
+/* Content area padding */
+.slide-body {
+  position:absolute; left:48px; top:0; right:0; bottom:0;
+  padding:0; z-index:10;
+}
+
+/* Section eyebrow meta */
+.eyebrow {
+  font-family:var(--mono); font-size:14px; font-weight:500;
+  letter-spacing:0.22em; color:var(--red); text-transform:uppercase;
+  display:flex; align-items:center; gap:14px; margin-bottom:20px;
+}
+.eyebrow::before { content:''; width:28px; height:2px; background:var(--red); flex-shrink:0; }
+
+/* Slide title */
+.slide-title {
+  font-family:'Barlow Condensed', sans-serif;
+  font-size:96px; font-weight:800; line-height:0.9;
+  text-transform:uppercase; letter-spacing:-0.01em;
+  color:var(--white); margin-bottom:48px;
+}
+
+/* ============================================
+   ARCHITECTURE DIAGRAM COMPONENTS
+   ============================================ */
+.arch-box {
+  padding:14px 22px; border:1px solid var(--border);
+  background:var(--panel); font-family:var(--mono);
+  font-size:15px; font-weight:500; letter-spacing:0.07em;
+  text-transform:uppercase; color:var(--white);
+  text-align:center; white-space:nowrap;
+}
+.arch-box small {
+  display:block; font-size:10px; font-weight:400;
+  letter-spacing:0.12em; color:var(--muted); margin-top:3px;
+}
+.arch-box.red   { border-color:var(--red);   background:var(--red-glow); }
+.arch-box.amber { border-color:var(--amber); background:var(--amber-glow); }
+.arch-box.purple{ border-color:var(--purple);background:rgba(139,92,246,0.08); }
+.arch-box.teal  { border-color:var(--teal);  background:rgba(6,182,212,0.08); }
+.arch-box.green { border-color:var(--green); background:rgba(16,185,129,0.08); }
+.arch-box.local { border-style:dashed; border-color:rgba(255,255,255,0.2); color:var(--muted); }
+.arch-arrow { font-family:var(--mono); font-size:11px; letter-spacing:0.15em; color:var(--faint); text-transform:uppercase; text-align:center; padding:4px 0; }
+
+/* ============================================
+   SLIDE 1 — TITLE
+   ============================================ */
+#s1 { background:var(--bg); }
+
+#s1 .main-title {
+  position:absolute; left:88px; top:50%; transform:translateY(-50%);
+  z-index:10; max-width:1060px;
+}
+#s1 .title-eyebrow {
+  font-family:var(--mono); font-size:16px; font-weight:500;
+  letter-spacing:0.26em; color:var(--red); text-transform:uppercase;
+  margin-bottom:24px; display:flex; align-items:center; gap:14px;
+}
+#s1 .title-eyebrow::before { content:''; width:28px; height:2px; background:var(--red); }
+#s1 .big-title {
+  font-family:'Barlow Condensed', sans-serif; font-size:248px;
+  font-weight:900; line-height:0.82; text-transform:uppercase;
+  letter-spacing:-0.02em; color:var(--white); margin-bottom:48px;
+}
+#s1 .title-sub {
+  font-family:'Barlow Condensed', sans-serif; font-size:40px;
+  font-weight:600; text-transform:uppercase; letter-spacing:0.06em;
+  color:var(--muted); line-height:1.3;
+}
+#s1 .title-rule {
+  width:500px; height:4px; background:var(--red);
+  margin:32px 0; transform-origin:left;
+}
+
+/* Right data panel */
+#s1 .data-panel {
+  position:absolute; right:80px; top:50%; transform:translateY(-50%);
+  width:560px; z-index:10;
+}
+#s1 .dp-label {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.22em;
+  color:var(--faint); text-transform:uppercase; margin-bottom:28px;
+  padding-bottom:12px; border-bottom:1px solid var(--faint);
+}
+#s1 .dp-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:16px 0; border-bottom:1px solid rgba(255,255,255,0.05);
+}
+#s1 .dp-key { font-family:var(--mono); font-size:12px; letter-spacing:0.1em; color:var(--muted); text-transform:uppercase; }
+#s1 .dp-val { font-family:var(--mono); font-size:12px; font-weight:700; letter-spacing:0.07em; color:var(--white); }
+#s1 .dp-val.r { color:var(--red); }
+#s1 .dp-val.a { color:var(--amber); }
+
+/* Sector timing top-right decoration */
+#s1 .sectors {
+  position:absolute; top:70px; right:80px; z-index:10;
+  display:flex; align-items:center; gap:4px;
+  font-family:var(--mono); font-size:11px; font-weight:700; letter-spacing:0.08em;
+}
+#s1 .s-box { width:52px; height:20px; display:flex; align-items:center; justify-content:center; }
+#s1 .s-box.s1 { background:var(--amber); color:#1a0800; }
+#s1 .s-box.s2 { background:var(--amber); color:#1a0800; }
+#s1 .s-box.s3 { background:var(--red); color:#fff; }
+#s1 .s-lbl { font-size:10px; letter-spacing:0.18em; color:var(--faint); margin-right:6px; text-transform:uppercase; }
+
+/* ============================================
+   SLIDE 2 — THE PROBLEM
+   ============================================ */
+#s2 .content {
+  position:absolute; left:88px; top:120px; right:80px; bottom:70px;
+  z-index:10; display:flex; flex-direction:column;
+}
+#s2 .big-statement {
+  font-family:'Barlow Condensed', sans-serif; font-size:82px;
+  font-weight:800; line-height:0.92; text-transform:uppercase;
+  letter-spacing:-0.01em; color:var(--white); max-width:900px;
+  margin-bottom:70px;
+}
+#s2 .big-statement span { color:var(--red); }
+#s2 .pain-grid {
+  display:grid; grid-template-columns:1fr 1fr;
+  gap:0; max-width:1400px;
+}
+#s2 .pain-item {
+  padding:28px 32px; border-top:1px solid var(--border);
+  display:flex; gap:24px; align-items:flex-start;
+}
+#s2 .pain-item:nth-child(odd) { border-right:1px solid var(--border); }
+#s2 .pain-num {
+  font-family:var(--mono); font-size:11px; font-weight:700;
+  color:var(--red); letter-spacing:0.08em; margin-top:4px; flex-shrink:0;
+}
+#s2 .pain-text {
+  font-family:'Barlow Condensed', sans-serif; font-size:38px;
+  font-weight:600; text-transform:uppercase; letter-spacing:0.01em;
+  color:var(--white); line-height:1.1;
+}
+#s2 .pain-sub {
+  font-family:var(--mono); font-size:12px; letter-spacing:0.1em;
+  color:var(--muted); margin-top:6px; text-transform:uppercase;
+}
+
+/* ============================================
+   SLIDE 3 — THE SOLUTION
+   ============================================ */
+#s3 .content {
+  position:absolute; left:88px; top:120px; right:80px; bottom:70px;
+  z-index:10;
+}
+#s3 .cap-grid {
+  display:grid; grid-template-columns:1fr 1fr; grid-template-rows:1fr 1fr;
+  gap:2px; height:720px; margin-top:16px;
+}
+#s3 .cap-card {
+  background:var(--panel); border:1px solid var(--border);
+  padding:48px 52px; display:flex; flex-direction:column;
+  transition:border-color 0.3s;
+}
+#s3 .cap-card:nth-child(1) { border-color:rgba(225,6,0,0.4); background:var(--red-glow); }
+#s3 .cap-card:nth-child(2) { border-color:rgba(255,135,0,0.3); background:var(--amber-glow); }
+#s3 .cap-num {
+  font-family:var(--mono); font-size:11px; font-weight:700;
+  letter-spacing:0.16em; color:var(--red); margin-bottom:20px;
+  text-transform:uppercase;
+}
+#s3 .cap-card:nth-child(2) .cap-num,
+#s3 .cap-card:nth-child(4) .cap-num { color:var(--amber); }
+#s3 .cap-name {
+  font-family:'Barlow Condensed', sans-serif; font-size:58px;
+  font-weight:800; text-transform:uppercase; letter-spacing:-0.01em;
+  color:var(--white); line-height:0.9; margin-bottom:16px;
+}
+#s3 .cap-desc {
+  font-family:'Barlow Condensed', sans-serif; font-size:28px;
+  font-weight:400; text-transform:uppercase; letter-spacing:0.03em;
+  color:var(--muted); line-height:1.3; margin-top:auto;
+}
+
+/* ============================================
+   SLIDE 4 — SYSTEM ARCHITECTURE
+   ============================================ */
+#s4 .left-col {
+  position:absolute; left:88px; top:120px; width:640px; bottom:70px; z-index:10;
+}
+#s4 .arch-desc {
+  font-family:'Barlow Condensed', sans-serif; font-size:34px;
+  font-weight:400; text-transform:uppercase; letter-spacing:0.03em;
+  color:var(--muted); line-height:1.4; max-width:580px; margin-top:0;
+}
+#s4 .arch-note {
+  margin-top:36px; padding:20px 24px; border-left:3px solid var(--red);
+  background:var(--red-glow);
+}
+#s4 .arch-note p {
+  font-family:var(--mono); font-size:13px; letter-spacing:0.08em;
+  color:var(--muted); text-transform:uppercase; line-height:1.6;
+}
+#s4 .arch-note strong { color:var(--red); }
+
+/* Arch diagram right side */
+#s4 .arch-diagram {
+  position:absolute; right:60px; top:80px; width:980px; bottom:60px; z-index:10;
+}
+
+/* ============================================
+   SLIDE 5 — AWS ARCHITECTURE
+   ============================================ */
+#s5 .content {
+  position:absolute; left:88px; top:110px; right:80px; bottom:70px; z-index:10;
+}
+/* Three grouped panels */
+#s5 .aws-groups {
+  display:flex; gap:20px; margin-top:16px; height:740px;
+}
+#s5 .aws-group {
+  display:flex; flex-direction:column; overflow:hidden; flex-shrink:0;
+}
+#s5 .aws-group.g-agentcore { width:460px; border:1.5px solid rgba(139,92,246,0.45); }
+#s5 .aws-group.g-bedrock   { width:380px; border:1.5px solid rgba(6,182,212,0.45); }
+#s5 .aws-group.g-other     { flex:1; border:1px solid rgba(255,255,255,0.09); }
+#s5 .ag-head {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  letter-spacing:0.22em; text-transform:uppercase;
+  padding:13px 20px; flex-shrink:0;
+}
+#s5 .aws-group.g-agentcore .ag-head { color:var(--purple); background:rgba(139,92,246,0.1);  border-bottom:1px solid rgba(139,92,246,0.22); }
+#s5 .aws-group.g-bedrock   .ag-head { color:var(--teal);   background:rgba(6,182,212,0.1);   border-bottom:1px solid rgba(6,182,212,0.22); }
+#s5 .aws-group.g-other     .ag-head { color:var(--muted);  background:rgba(255,255,255,0.03);border-bottom:1px solid rgba(255,255,255,0.07); }
+#s5 .ag-cards   { flex:1; display:flex; flex-direction:column; }
+#s5 .ag-cards-2 { flex:1; display:grid; grid-template-columns:1fr 1fr; grid-template-rows:repeat(3,1fr); }
+#s5 .aws-card {
+  flex:1; padding:20px 22px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+  border-right:1px solid rgba(255,255,255,0.05);
+  background:var(--panel); display:flex; flex-direction:column; gap:10px;
+}
+#s5 .aws-card.purple { background:rgba(139,92,246,0.07); }
+#s5 .aws-card.teal   { background:rgba(6,182,212,0.07); }
+#s5 .aws-card.amber  { background:rgba(255,135,0,0.07); }
+#s5 .aws-card.green  { background:rgba(16,185,129,0.07); }
+#s5 .aws-card.blue   { background:rgba(59,130,246,0.07); }
+#s5 .aws-cat {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  letter-spacing:0.2em; text-transform:uppercase;
+}
+#s5 .aws-card.purple .aws-cat { color:var(--purple); }
+#s5 .aws-card.teal   .aws-cat { color:var(--teal); }
+#s5 .aws-card.amber  .aws-cat { color:var(--amber); }
+#s5 .aws-card.green  .aws-cat { color:var(--green); }
+#s5 .aws-card.blue   .aws-cat { color:var(--blue); }
+#s5 .aws-name {
+  font-family:'Barlow Condensed', sans-serif; font-size:28px;
+  font-weight:700; text-transform:uppercase; letter-spacing:0.01em;
+  color:var(--white); line-height:1.0;
+}
+#s5 .aws-detail {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.07em;
+  color:var(--muted); text-transform:uppercase; line-height:1.55;
+}
+
+/* ============================================
+   SLIDE 6 — MULTI-AGENT SYSTEM
+   ============================================ */
+#s6 .content {
+  position:absolute; left:88px; top:110px; right:80px; bottom:70px; z-index:10;
+}
+#s6 .agent-tree {
+  display:flex; flex-direction:column; align-items:flex-start; gap:0;
+  margin-top:16px;
+}
+#s6 .agent-row { display:flex; align-items:center; gap:0; }
+#s6 .agent-node {
+  padding:18px 28px; border:1px solid var(--border);
+  background:var(--panel); display:flex; flex-direction:column; gap:6px;
+  min-width:240px;
+}
+#s6 .agent-node.root { border-color:var(--red); background:var(--red-glow); min-width:360px; }
+#s6 .agent-node.parallel { border-color:var(--amber); background:var(--amber-glow); min-width:280px; }
+#s6 .agent-node.sub { min-width:300px; }
+#s6 .agent-node.premium { border-color:var(--purple); background:rgba(139,92,246,0.08); }
+#s6 .agent-node.submit { border-color:var(--teal); background:rgba(6,182,212,0.08); }
+#s6 .an-role {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  letter-spacing:0.2em; text-transform:uppercase;
+}
+#s6 .agent-node.root     .an-role { color:var(--red); }
+#s6 .agent-node.parallel .an-role { color:var(--amber); }
+#s6 .agent-node.premium  .an-role { color:var(--purple); }
+#s6 .agent-node.submit   .an-role { color:var(--teal); }
+#s6 .agent-node.sub      .an-role { color:var(--faint); }
+#s6 .an-name {
+  font-family:'Barlow Condensed', sans-serif; font-size:32px;
+  font-weight:700; text-transform:uppercase; color:var(--white); line-height:1.0;
+}
+#s6 .an-model {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.08em;
+  color:var(--muted); text-transform:uppercase;
+}
+#s6 .an-tools {
+  font-family:var(--mono); font-size:10px; letter-spacing:0.07em;
+  color:var(--faint); text-transform:uppercase; margin-top:2px;
+}
+/* Tree connectors */
+#s6 .tree-indent { width:36px; flex-shrink:0; }
+#s6 .tree-branch {
+  width:36px; height:100%; flex-shrink:0; position:relative;
+  border-left:1px solid rgba(255,255,255,0.1);
+  border-bottom:1px solid rgba(255,255,255,0.1);
+  margin-right:0; align-self:stretch;
+}
+#s6 .v-connector {
+  width:1px; height:16px; background:rgba(255,255,255,0.12); margin:2px 0;
+}
+#s6 .h-arrow {
+  font-size:12px; color:rgba(255,255,255,0.2); padding:0 8px;
+  font-family:var(--mono); letter-spacing:0.1em;
+}
+#s6 .memory-note {
+  position:absolute; right:80px; top:160px; z-index:10;
+  border:1px solid var(--border); padding:24px 28px; width:400px;
+}
+#s6 .memory-note .mn-label {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  letter-spacing:0.2em; color:var(--green); text-transform:uppercase;
+  margin-bottom:14px;
+}
+#s6 .memory-note .mn-item {
+  font-family:'Barlow Condensed', sans-serif; font-size:24px;
+  font-weight:600; text-transform:uppercase; color:var(--muted);
+  line-height:1.3;
+}
+
+/* ============================================
+   SLIDE 7 — EXECUTION CHAIN (merged)
+   ============================================ */
+#s7 .content {
+  position:absolute; left:88px; top:110px; right:80px; bottom:70px; z-index:10;
+}
+#s7 .exec-chain {
+  display:flex; flex-direction:column; gap:0; margin-top:8px;
+}
+#s7 .phase-row {
+  display:flex; align-items:stretch; border-top:1px solid var(--border);
+}
+#s7 .phase-row:last-child { border-bottom:1px solid var(--border); }
+#s7 .phase-label {
+  width:148px; flex-shrink:0; display:flex; flex-direction:column;
+  justify-content:center; padding:12px 16px; border-right:2px solid var(--border);
+}
+#s7 .ph-num {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  letter-spacing:0.2em; color:var(--red); text-transform:uppercase;
+}
+#s7 .ph-name {
+  font-family:'Barlow Condensed',sans-serif; font-size:20px; font-weight:800;
+  text-transform:uppercase; color:var(--white); line-height:1.0; margin-top:4px;
+}
+#s7 .phase-content {
+  flex:1; display:flex; align-items:center; padding:14px 18px; gap:0;
+  overflow:hidden;
+}
+#s7 .phase-row.par .phase-content {
+  flex-direction:column; align-items:stretch; padding:0;
+}
+/* Actor boxes */
+#s7 .ec-box {
+  padding:10px 14px; border:1px solid var(--border); background:var(--panel);
+  flex-shrink:0; text-align:center; min-width:110px;
+}
+#s7 .ec-box.red   { border-color:var(--red);    background:var(--red-glow); }
+#s7 .ec-box.amber { border-color:var(--amber);  background:var(--amber-glow); }
+#s7 .ec-box.teal  { border-color:var(--teal);   background:rgba(6,182,212,0.08); }
+#s7 .ec-box.green { border-color:var(--green);  background:rgba(16,185,129,0.08); }
+#s7 .ec-box.purple{ border-color:var(--purple); background:rgba(139,92,246,0.08); }
+#s7 .ec-name {
+  font-family:'Barlow Condensed',sans-serif; font-size:18px; font-weight:700;
+  text-transform:uppercase; color:var(--white); line-height:1.0;
+}
+#s7 .ec-sub {
+  font-family:var(--mono); font-size:9px; letter-spacing:0.07em;
+  color:var(--muted); text-transform:uppercase; margin-top:3px;
+}
+/* Arrow connectors */
+#s7 .ec-arr {
+  display:flex; flex-direction:column; justify-content:center; align-items:center;
+  padding:0 6px; flex-shrink:0; min-width:52px;
+}
+#s7 .ec-line {
+  width:100%; height:1px; background:rgba(255,255,255,0.18); position:relative;
+}
+#s7 .ec-line::after {
+  content:"▶"; position:absolute; right:-4px; top:-7px;
+  font-size:9px; color:rgba(255,255,255,0.3);
+}
+#s7 .ec-arr.r .ec-line { background:rgba(225,6,0,0.5); }
+#s7 .ec-arr.r .ec-line::after { color:var(--red); }
+#s7 .ec-arr.a .ec-line { background:rgba(255,135,0,0.5); }
+#s7 .ec-arr.a .ec-line::after { color:var(--amber); }
+#s7 .ec-arr.t .ec-line { background:rgba(6,182,212,0.45); }
+#s7 .ec-arr.t .ec-line::after { color:var(--teal); }
+#s7 .ec-lbl {
+  font-family:var(--mono); font-size:8px; letter-spacing:0.07em;
+  color:var(--faint); text-transform:uppercase; margin-top:3px; text-align:center;
+  white-space:nowrap;
+}
+/* Parallel sub-rows */
+#s7 .par-sub {
+  display:flex; align-items:center; padding:10px 18px; gap:0;
+  border-bottom:1px solid rgba(255,135,0,0.1); flex:1;
+}
+#s7 .par-sub:last-child { border-bottom:none; }
+#s7 .par-agent {
+  font-family:var(--mono); font-size:9px; font-weight:700;
+  letter-spacing:0.12em; color:var(--amber); text-transform:uppercase;
+  width:110px; flex-shrink:0;
+}
+#s7 .par-agent.premium { color:var(--purple); }
+
+/* ============================================
+   SLIDE 9 — TECHNICAL DECISIONS
+   ============================================ */
+#s9 .content {
+  position:absolute; left:88px; top:110px; right:80px; bottom:70px; z-index:10;
+}
+#s9 .dec-grid {
+  display:grid; grid-template-columns:1fr 1fr; gap:12px;
+  margin-top:16px; height:820px;
+}
+#s9 .dec-card {
+  padding:44px 48px; border:1px solid var(--border);
+  background:var(--panel); display:flex; flex-direction:column;
+}
+#s9 .dec-card:nth-child(1) { border-color:rgba(225,6,0,0.4); background:var(--red-glow); }
+#s9 .dec-card:nth-child(2) { border-color:rgba(255,135,0,0.3); background:var(--amber-glow); }
+#s9 .dc-num {
+  font-family:var(--mono); font-size:10px; font-weight:700;
+  letter-spacing:0.2em; margin-bottom:16px; text-transform:uppercase;
+}
+#s9 .dec-card:nth-child(1) .dc-num { color:var(--red); }
+#s9 .dec-card:nth-child(2) .dc-num { color:var(--amber); }
+#s9 .dec-card:nth-child(3) .dc-num,
+#s9 .dec-card:nth-child(4) .dc-num { color:var(--faint); }
+#s9 .dc-title {
+  font-family:'Barlow Condensed', sans-serif; font-size:52px;
+  font-weight:800; text-transform:uppercase; letter-spacing:-0.01em;
+  color:var(--white); line-height:0.92; margin-bottom:20px;
+}
+#s9 .dc-body {
+  font-family:'Barlow Condensed', sans-serif; font-size:30px;
+  font-weight:400; text-transform:uppercase; letter-spacing:0.02em;
+  color:var(--muted); line-height:1.35; margin-top:auto;
+}
+#s9 .dc-result {
+  font-family:var(--mono); font-size:11px; font-weight:700;
+  letter-spacing:0.12em; text-transform:uppercase; margin-top:16px;
+  padding:10px 14px; background:rgba(255,255,255,0.05); border-left:2px solid var(--red);
+  color:var(--white);
+}
+#s9 .dec-card:nth-child(2) .dc-result { border-left-color:var(--amber); }
+
+/* ============================================
+   SLIDE 10 — STATUS
+   ============================================ */
+#s10 .content {
+  position:absolute; left:88px; top:110px; right:80px; bottom:70px; z-index:10;
+  display:grid; grid-template-columns:1fr 1fr; gap:60px;
+}
+#s10 .col-label {
+  font-family:var(--mono); font-size:11px; font-weight:700;
+  letter-spacing:0.22em; text-transform:uppercase; margin-bottom:28px;
+  padding-bottom:14px; border-bottom:2px solid var(--red);
+}
+#s10 .check-item {
+  display:flex; align-items:flex-start; gap:20px;
+  padding:20px 0; border-bottom:1px solid var(--border);
+}
+#s10 .ci-icon {
+  font-family:var(--mono); font-size:12px; font-weight:700;
+  letter-spacing:0.08em; padding:4px 8px;
+  flex-shrink:0; margin-top:2px;
+}
+#s10 .check-item.done .ci-icon { color:var(--green); border:1px solid rgba(16,185,129,0.4); }
+#s10 .check-item.next .ci-icon { color:var(--amber); border:1px solid rgba(255,135,0,0.4); }
+#s10 .ci-text {
+  font-family:'Barlow Condensed', sans-serif; font-size:34px;
+  font-weight:600; text-transform:uppercase; color:var(--white); line-height:1.1;
+}
+#s10 .ci-sub {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.08em;
+  color:var(--muted); text-transform:uppercase; margin-top:4px;
+}
+
+/* ============================================
+   INLINE EDITOR
+   ============================================ */
+.edit-hotzone { position:fixed; top:0; left:0; width:80px; height:80px; z-index:10000; cursor:pointer; }
+.edit-toggle {
+  position:fixed; top:12px; left:12px; z-index:10001;
+  background:rgba(225,6,0,0.85); border:none; color:#fff; padding:6px 12px;
+  font-family:var(--mono); font-size:11px; letter-spacing:0.1em; cursor:pointer;
+  opacity:0; pointer-events:none; transition:opacity 0.3s;
+  text-transform:uppercase;
+}
+.edit-toggle.show, .edit-toggle.active { opacity:1; pointer-events:auto; }
+[contenteditable]:focus { outline:2px solid var(--red); outline-offset:2px; }
+.edit-mode-active [contenteditable] { cursor:text; }
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+<main class="deck-stage" id="deckStage">
+
+<!-- ===========================
+     SLIDE 1 — TITLE
+     =========================== -->
+<section class="slide" id="s1">
+  <div class="bg-stripes"></div>
+  <div class="red-stripe"></div>
+
+  <div class="sectors">
+    <span class="s-lbl">Lap</span>
+    <div class="s-box s1">S1</div>
+    <div class="s-box s2">S2</div>
+    <div class="s-box s3">S3</div>
+  </div>
+
+  <div class="main-title">
+    <div class="title-eyebrow reveal-left d1">F1 Fantasy Intelligence Platform</div>
+    <div class="big-title reveal-left d2">GRID<br>WISE</div>
+    <div class="title-rule reveal d3"></div>
+    <div class="title-sub reveal d4">Multi-Agent AI Advisor &mdash; AWS Bedrock AgentCore</div>
+  </div>
+
+  <div class="data-panel reveal d5">
+    <div class="dp-label">System Configuration — Session 01</div>
+    <div class="dp-row"><span class="dp-key">Root Agent</span><span class="dp-val r">Claude 3.5 Sonnet</span></div>
+    <div class="dp-row"><span class="dp-key">Sub-Agents</span><span class="dp-val">5 × Claude Haiku</span></div>
+    <div class="dp-row"><span class="dp-key">Tools</span><span class="dp-val a">11 Registered</span></div>
+    <div class="dp-row"><span class="dp-key">Memory</span><span class="dp-val">STM + LTM</span></div>
+    <div class="dp-row"><span class="dp-key">Auth</span><span class="dp-val">Cognito + SigV4</span></div>
+    <div class="dp-row"><span class="dp-key">Infrastructure</span><span class="dp-val">AWS CDK 2-Stack</span></div>
+  </div>
+
+  <div class="footer-red reveal d6">
+    <span>Zeal Patel</span><div class="fr-sep"></div>
+    <span>AWS Bedrock AgentCore · Google ADK · CopilotKit</span><div class="fr-sep"></div>
+    <span>June 2026</span>
+  </div>
+</section>
+
+<!-- ===========================
+     SLIDE 2 — THE PROBLEM
+     =========================== -->
+<section class="slide" id="s2">
+  <div class="bg-stripes"></div>
+  <div class="red-stripe"></div>
+
+  <div class="content">
+    <div class="eyebrow reveal-left d1">The Challenge</div>
+    <div class="big-statement reveal-left d2">F1 Fantasy demands <span>real-time intelligence</span> across 24 races</div>
+
+    <div class="pain-grid">
+      <div class="pain-item reveal d3">
+        <div class="pain-num">01</div>
+        <div>
+          <div class="pain-text">$100M budget cap<br>5 drivers · 2 constructors</div>
+          <div class="pain-sub">Roster constraints every race weekend</div>
+        </div>
+      </div>
+      <div class="pain-item reveal d4">
+        <div class="pain-num">02</div>
+        <div>
+          <div class="pain-text">Real-time price changes<br>every qualifying session</div>
+          <div class="pain-sub">Driver prices shift before lockout</div>
+        </div>
+      </div>
+      <div class="pain-item reveal d5">
+        <div class="pain-num">03</div>
+        <div>
+          <div class="pain-text">Weather · odds · form<br>track-specific conditions</div>
+          <div class="pain-sub">6 external data sources to track manually</div>
+        </div>
+      </div>
+      <div class="pain-item reveal d6">
+        <div class="pain-num">04</div>
+        <div>
+          <div class="pain-text">Chip strategy across<br>a full season</div>
+          <div class="pain-sub">Wildcard · Limitless · Final Fix · Extra DRS</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>GridWise</span><div class="sf-sep"></div>
+    <span class="sf-title">The Problem</span>
+    <span class="sf-num">02 / 09</span>
+  </div>
+</section>
+
+<!-- ===========================
+     SLIDE 3 — THE SOLUTION
+     =========================== -->
+<section class="slide" id="s3">
+  <div class="bg-stripes"></div>
+  <div class="red-stripe"></div>
+
+  <div class="content">
+    <div class="eyebrow reveal-left d1">GridWise</div>
+    <div class="slide-title reveal-left d2" style="margin-bottom:12px;">One platform.<br>Complete intelligence.</div>
+
+    <div class="cap-grid reveal d3">
+      <div class="cap-card">
+        <div class="cap-num">01</div>
+        <div class="cap-name">Team<br>Management</div>
+        <div class="cap-desc">Create &amp; validate teams · real-time budget tracking · driver &amp; constructor selectors</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-num">02</div>
+        <div class="cap-name">Rules<br>Engine</div>
+        <div class="cap-desc">Configurable validator strategy pattern · 6 rule types · severity levels</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-num">03</div>
+        <div class="cap-name">AI<br>Advisor</div>
+        <div class="cap-desc">Multi-agent graph · parallel data gathering · rules-first synthesis · tier-filtered intelligence</div>
+      </div>
+      <div class="cap-card">
+        <div class="cap-num">04</div>
+        <div class="cap-name">One-Click<br>Submit</div>
+        <div class="cap-desc">Rule validation gating · CopilotKit state snapshot · apply in a single click</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>GridWise</span><div class="sf-sep"></div>
+    <span class="sf-title">The Solution</span>
+    <span class="sf-num">03 / 09</span>
+  </div>
+</section>
+
+<!-- ===========================
+     SLIDE 4 — SYSTEM ARCHITECTURE
+     =========================== -->
+<section class="slide" id="s4">
+  <div class="bg-stripes"></div>
+  <div class="red-stripe"></div>
+
+  <div class="left-col">
+    <div class="eyebrow reveal-left d1">Architecture</div>
+    <div class="slide-title reveal-left d2" style="font-size:80px;">System<br>Architecture</div>
+    <div class="arch-desc reveal d3">Browser to external APIs — the complete request path through the multi-agent stack.</div>
+    <div class="arch-note reveal d4">
+      <p><strong>Note:</strong> React frontend and FastAPI service run locally. Dashed borders = not yet deployed to cloud hosting.</p>
+    </div>
+  </div>
+
+  <div class="arch-diagram reveal d3">
+    <svg width="960" height="920" viewBox="0 0 960 920" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+      <defs>
+        <marker id="ah" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,9 3,0 6" fill="rgba(240,242,245,0.25)"/>
+        </marker>
+        <marker id="ahr" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,9 3,0 6" fill="#E10600"/>
+        </marker>
+        <marker id="aha" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+          <polygon points="0 0,9 3,0 6" fill="#FF8700"/>
+        </marker>
+      </defs>
+      <style>
+        text { font-family: 'JetBrains Mono', monospace; }
+        .bx-title { font-size:15px; font-weight:700; fill:rgba(240,242,245,0.85); letter-spacing:2px; text-transform:uppercase; }
+        .bx-sub   { font-size:11px; font-weight:400; fill:rgba(240,242,245,0.4); letter-spacing:2px; text-transform:uppercase; }
+        .lbl      { font-size:10px; font-weight:500; fill:rgba(240,242,245,0.3); letter-spacing:2px; text-transform:uppercase; }
+        .lbl-r    { font-size:10px; font-weight:700; fill:#E10600; letter-spacing:2px; text-transform:uppercase; }
+        .lbl-a    { font-size:10px; font-weight:700; fill:#FF8700; letter-spacing:2px; text-transform:uppercase; }
+        .side-txt { font-size:12px; font-weight:500; fill:rgba(240,242,245,0.4); letter-spacing:1.5px; text-transform:uppercase; }
+      </style>
+
+      <!-- BROWSER (local, dashed) -->
+      <rect x="80" y="10" width="320" height="68" rx="2"
+            stroke="rgba(255,255,255,0.22)" stroke-width="1.5" stroke-dasharray="5,4"
+            fill="rgba(255,255,255,0.025)"/>
+      <text x="240" y="38" class="bx-title" text-anchor="middle">Browser</text>
+      <text x="240" y="58" class="bx-sub" text-anchor="middle">React 19 + CopilotKit · local</text>
+
+      <!-- Connector 1 → 2 -->
+      <line x1="240" y1="78" x2="240" y2="110" stroke="rgba(255,255,255,0.2)" stroke-width="1" marker-end="url(#ah)"/>
+      <text x="250" y="98" class="lbl">HTTPS + JWT</text>
+
+      <!-- FASTAPI (local, dashed) -->
+      <rect x="80" y="110" width="320" height="68" rx="2"
+            stroke="rgba(255,255,255,0.22)" stroke-width="1.5" stroke-dasharray="5,4"
+            fill="rgba(255,255,255,0.025)"/>
+      <text x="240" y="138" class="bx-title" text-anchor="middle">FastAPI Service</text>
+      <text x="240" y="158" class="bx-sub" text-anchor="middle">Python 3.12 · localhost:8000</text>
+      <!-- Side line to MongoDB/Cognito -->
+      <line x1="400" y1="144" x2="440" y2="144" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <text x="446" y="136" class="side-txt">MongoDB</text>
+      <text x="446" y="154" class="side-txt">Cognito</text>
+
+      <!-- Connector 2 → 3 -->
+      <line x1="240" y1="178" x2="240" y2="218" stroke="rgba(255,255,255,0.2)" stroke-width="1" marker-end="url(#ahr)"/>
+      <text x="250" y="201" class="lbl-r">SIGV4 POST</text>
+
+      <!-- AGENTCORE RUNTIME (red, deployed) -->
+      <rect x="60" y="218" width="360" height="72" rx="2"
+            stroke="#E10600" stroke-width="1.5" fill="rgba(225,6,0,0.08)"/>
+      <text x="240" y="246" class="bx-title" text-anchor="middle">AgentCore Runtime</text>
+      <text x="240" y="266" class="bx-sub" text-anchor="middle">BedrockAgentCoreApp · us-east-1</text>
+      <!-- AWS label -->
+      <text x="72" y="228" style="font-size:9px;font-weight:700;fill:#E10600;letter-spacing:2px;">AWS</text>
+
+      <!-- Connector 3 → 4 -->
+      <line x1="240" y1="290" x2="240" y2="326" stroke="rgba(225,6,0,0.5)" stroke-width="1" marker-end="url(#ahr)"/>
+      <text x="250" y="311" class="lbl">TOOL DISCOVERY</text>
+
+      <!-- AGENTCORE GATEWAY (red) -->
+      <rect x="60" y="326" width="360" height="68" rx="2"
+            stroke="#E10600" stroke-width="1.5" fill="rgba(225,6,0,0.08)"/>
+      <text x="240" y="354" class="bx-title" text-anchor="middle">AgentCore Gateway</text>
+      <text x="240" y="372" class="bx-sub" text-anchor="middle">JWT Cognito auth · 11 tools · semantic discovery</text>
+      <!-- Side line to Memory -->
+      <line x1="420" y1="360" x2="458" y2="360" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+      <text x="464" y="355" class="side-txt">AgentCore</text>
+      <text x="464" y="370" class="side-txt">Memory</text>
+
+      <!-- Connector 4 → 5 -->
+      <line x1="240" y1="394" x2="240" y2="430" stroke="rgba(255,135,0,0.6)" stroke-width="1" marker-end="url(#aha)"/>
+      <text x="250" y="415" class="lbl-a">INVOKE</text>
+
+      <!-- LAMBDA PROXY (amber) -->
+      <rect x="60" y="430" width="360" height="68" rx="2"
+            stroke="#FF8700" stroke-width="1.5" fill="rgba(255,135,0,0.08)"/>
+      <text x="240" y="458" class="bx-title" text-anchor="middle">Lambda Proxy</text>
+      <text x="240" y="476" class="bx-sub" text-anchor="middle">SigV4 signing · botocore.auth</text>
+      <text x="72" y="440" style="font-size:9px;font-weight:700;fill:#FF8700;letter-spacing:2px;">λ AWS</text>
+
+      <!-- Connector 5 → 6 -->
+      <line x1="240" y1="498" x2="240" y2="534" stroke="rgba(255,255,255,0.2)" stroke-width="1" marker-end="url(#ah)"/>
+      <text x="250" y="519" class="lbl-r">SIGV4-SIGNED POST</text>
+
+      <!-- FASTAPI TOOL ENDPOINTS -->
+      <rect x="60" y="534" width="360" height="68" rx="2"
+            stroke="rgba(255,255,255,0.2)" stroke-width="1.5" fill="rgba(255,255,255,0.04)"/>
+      <text x="240" y="562" class="bx-title" text-anchor="middle">FastAPI Tool Endpoints</text>
+      <text x="240" y="580" class="bx-sub" text-anchor="middle">/api/v1/agent/tools/* · 11 endpoints</text>
+
+      <!-- Connector 6 → external -->
+      <line x1="240" y1="602" x2="240" y2="630" stroke="rgba(255,255,255,0.2)" stroke-width="1" marker-end="url(#ah)"/>
+
+      <!-- EXTERNAL APIS (row of small boxes) -->
+      <!-- OpenF1 -->
+      <rect x="10" y="630" width="120" height="44" rx="2"
+            stroke="rgba(255,255,255,0.12)" stroke-width="1" fill="rgba(255,255,255,0.03)"/>
+      <text x="70" y="649" class="bx-sub" text-anchor="middle" style="font-size:10px">OpenF1</text>
+      <text x="70" y="664" class="bx-sub" text-anchor="middle" style="font-size:9px;fill:rgba(240,242,245,0.2)">Live Data</text>
+      <!-- Jolpica -->
+      <rect x="140" y="630" width="120" height="44" rx="2"
+            stroke="rgba(255,255,255,0.12)" stroke-width="1" fill="rgba(255,255,255,0.03)"/>
+      <text x="200" y="649" class="bx-sub" text-anchor="middle" style="font-size:10px">Jolpica</text>
+      <text x="200" y="664" class="bx-sub" text-anchor="middle" style="font-size:9px;fill:rgba(240,242,245,0.2)">Standings</text>
+      <!-- Weather -->
+      <rect x="270" y="630" width="120" height="44" rx="2"
+            stroke="rgba(139,92,246,0.4)" stroke-width="1" fill="rgba(139,92,246,0.06)"/>
+      <text x="330" y="649" class="bx-sub" text-anchor="middle" style="font-size:10px;fill:rgba(139,92,246,0.9)">WeatherAPI</text>
+      <text x="330" y="664" class="bx-sub" text-anchor="middle" style="font-size:9px;fill:rgba(139,92,246,0.4)">Premium</text>
+      <!-- Odds -->
+      <rect x="400" y="630" width="120" height="44" rx="2"
+            stroke="rgba(139,92,246,0.4)" stroke-width="1" fill="rgba(139,92,246,0.06)"/>
+      <text x="460" y="649" class="bx-sub" text-anchor="middle" style="font-size:10px;fill:rgba(139,92,246,0.9)">Odds API</text>
+      <text x="460" y="664" class="bx-sub" text-anchor="middle" style="font-size:9px;fill:rgba(139,92,246,0.4)">Premium</text>
+      <!-- Reddit -->
+      <rect x="530" y="630" width="120" height="44" rx="2"
+            stroke="rgba(139,92,246,0.4)" stroke-width="1" fill="rgba(139,92,246,0.06)"/>
+      <text x="590" y="649" class="bx-sub" text-anchor="middle" style="font-size:10px;fill:rgba(139,92,246,0.9)">Reddit API</text>
+      <text x="590" y="664" class="bx-sub" text-anchor="middle" style="font-size:9px;fill:rgba(139,92,246,0.4)">Premium</text>
+      <!-- F1 Fantasy -->
+      <rect x="660" y="630" width="120" height="44" rx="2"
+            stroke="rgba(255,255,255,0.12)" stroke-width="1" fill="rgba(255,255,255,0.03)"/>
+      <text x="720" y="649" class="bx-sub" text-anchor="middle" style="font-size:10px">F1 Fantasy</text>
+      <text x="720" y="664" class="bx-sub" text-anchor="middle" style="font-size:9px;fill:rgba(240,242,245,0.2)">Teams+Prices</text>
+
+      <!-- Bedrock (to right of Runtime) -->
+      <rect x="480" y="218" width="200" height="68" rx="2"
+            stroke="rgba(6,182,212,0.5)" stroke-width="1.5" fill="rgba(6,182,212,0.06)"/>
+      <text x="580" y="245" class="bx-sub" text-anchor="middle" style="font-size:10px;fill:rgba(6,182,212,0.9)">Amazon Bedrock</text>
+      <text x="580" y="263" class="bx-sub" text-anchor="middle" style="font-size:10px">Sonnet 3.5</text>
+      <text x="580" y="278" class="bx-sub" text-anchor="middle" style="font-size:10px">Haiku 3</text>
+      <line x1="420" y1="254" x2="480" y2="254" stroke="rgba(6,182,212,0.35)" stroke-width="1"/>
+      <text x="428" y="246" style="font-size:9px;font-weight:700;fill:rgba(6,182,212,0.6);letter-spacing:1px;">INVOKE</text>
+    </svg>
+  </div>
+
+  <div class="slide-footer">
+    <span>GridWise</span><div class="sf-sep"></div>
+    <span class="sf-title">System Architecture</span>
+    <span class="sf-num">04 / 09</span>
+  </div>
+</section>
+
+<!-- ===========================
+     SLIDE 5 — AWS CLOUD
+     =========================== -->
+<section class="slide" id="s5">
+  <div class="bg-stripes"></div>
+  <div class="red-stripe"></div>
+
+  <div class="content">
+    <div class="eyebrow reveal-left d1">Infrastructure</div>
+    <div class="slide-title reveal-left d2" style="font-size:80px;margin-bottom:20px;">AWS Cloud Services</div>
+
+    <div class="aws-groups reveal d3">
+
+      <!-- AgentCore Group -->
+      <div class="aws-group g-agentcore">
+        <div class="ag-head">AgentCore</div>
+        <div class="ag-cards">
+          <div class="aws-card purple">
+            <div class="aws-cat">Runtime</div>
+            <div class="aws-name">Agent Runtime</div>
+            <div class="aws-detail">BedrockAgentCoreApp<br>Container image via ECR</div>
+          </div>
+          <div class="aws-card purple">
+            <div class="aws-cat">Gateway</div>
+            <div class="aws-name">Agent Gateway</div>
+            <div class="aws-detail">JWT Cognito auth<br>11 tools · Semantic discovery</div>
+          </div>
+          <div class="aws-card purple">
+            <div class="aws-cat">Memory</div>
+            <div class="aws-name">Agent Memory</div>
+            <div class="aws-detail">STM: 30-day session<br>LTM: 90-day long-term</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bedrock Group -->
+      <div class="aws-group g-bedrock">
+        <div class="ag-head">Amazon Bedrock — AI Models</div>
+        <div class="ag-cards">
+          <div class="aws-card teal">
+            <div class="aws-cat">Root Agent</div>
+            <div class="aws-name">Claude Sonnet 3.5</div>
+            <div class="aws-detail">F1FantasyAdvisor<br>Synthesis + orchestration</div>
+          </div>
+          <div class="aws-card teal">
+            <div class="aws-cat">Sub-Agents × 5</div>
+            <div class="aws-name">Claude Haiku 3</div>
+            <div class="aws-detail">DataGathering pipeline<br>Submission flow</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Supporting Services Group -->
+      <div class="aws-group g-other">
+        <div class="ag-head">Lambda · Auth · Config · Registry</div>
+        <div class="ag-cards-2">
+          <div class="aws-card amber">
+            <div class="aws-cat">Lambda · Compute</div>
+            <div class="aws-name">SigV4 Proxy</div>
+            <div class="aws-detail">Signs requests<br>Gateway → FastAPI tools</div>
+          </div>
+          <div class="aws-card amber">
+            <div class="aws-cat">Lambda · CDK CR</div>
+            <div class="aws-name">Runtime CR</div>
+            <div class="aws-detail">Provisions AgentCore<br>Runtime via SDK</div>
+          </div>
+          <div class="aws-card green">
+            <div class="aws-cat">Auth · JWT</div>
+            <div class="aws-name">Amazon Cognito</div>
+            <div class="aws-detail">User Pool · JWT issuance<br>custom:tier claim</div>
+          </div>
+          <div class="aws-card green">
+            <div class="aws-cat">Permissions</div>
+            <div class="aws-name">IAM Roles</div>
+            <div class="aws-detail">Execution roles<br>Trust policies · CDK</div>
+          </div>
+          <div class="aws-card blue">
+            <div class="aws-cat">Secrets · Config</div>
+            <div class="aws-name">Secrets Manager</div>
+            <div class="aws-detail">WeatherAPI · OddsAPI<br>Reddit · F1 credentials</div>
+          </div>
+          <div class="aws-card blue">
+            <div class="aws-cat">Registry · Config</div>
+            <div class="aws-name">ECR + SSM</div>
+            <div class="aws-detail">Container image registry<br>9 SSM parameters</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>GridWise</span><div class="sf-sep"></div>
+    <span class="sf-title">AWS Architecture</span>
+    <span class="sf-num">05 / 09</span>
+  </div>
+</section>
+
+<!-- ===========================
+     SLIDE 6 — AGENT GRAPH
+     =========================== -->
+<section class="slide" id="s6">
+  <div class="bg-stripes"></div>
+  <div class="red-stripe"></div>
+
+  <div class="content">
+    <div class="eyebrow reveal-left d1">Agent Design</div>
+    <div class="slide-title reveal-left d2" style="font-size:80px;margin-bottom:24px;">The Multi-Agent Graph</div>
+
+    <div class="reveal d3" style="margin-top:10px;width:100%;height:740px;">
+      <svg viewBox="0 0 1680 720" width="100%" height="100%" style="display:block;overflow:visible">
+        <defs>
+          <style>
+            .sv-role  { font:700 10px/1 'JetBrains Mono',monospace; letter-spacing:.16em; text-transform:uppercase; }
+            .sv-name  { font:700 30px/1 'Barlow Condensed',sans-serif; letter-spacing:.02em; text-transform:uppercase; fill:#F0F2F5; }
+            .sv-model { font:400 10px/1 'JetBrains Mono',monospace; letter-spacing:.07em; text-transform:uppercase; fill:rgba(240,242,245,0.47); }
+            .sv-det   { font:400 9px/1 'JetBrains Mono',monospace; letter-spacing:.05em; text-transform:uppercase; fill:rgba(240,242,245,0.27); }
+            .sv-out   { font:700 10px/1 'JetBrains Mono',monospace; letter-spacing:.1em; text-transform:uppercase; fill:#FF8700; }
+            .sv-lbl   { font:400 9px/1 'JetBrains Mono',monospace; letter-spacing:.1em; text-transform:uppercase; }
+            .sv-edge  { fill:none; stroke-width:1.5; }
+          </style>
+          <marker id="s6w" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(255,255,255,0.38)"/></marker>
+          <marker id="s6a" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(255,135,0,0.8)"/></marker>
+          <marker id="s6g" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(16,185,129,0.8)"/></marker>
+          <marker id="s6t" viewBox="0 0 8 6" refX="7" refY="3" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L8,3 L0,6 L2,3 Z" fill="rgba(6,182,212,0.8)"/></marker>
+        </defs>
+
+        <!-- ====== HIERARCHY ====== -->
+        <!-- Level 1 (top):    F1FantasyAdvisor (Root)             -->
+        <!-- Level 2 (middle): DataGathering | SubmissionAgent     -->
+        <!-- Side panel:       AgentCore Memory (right column)     -->
+        <!-- Level 3 (bottom): F1DataAgent | IntelAgent | FantasyContext -->
+
+        <!-- ====== EDGES behind nodes ====== -->
+
+        <!-- D: Memory → Root — reads LTM on session start (routed above all boxes) -->
+        <path class="sv-edge" d="M 1415 120 V 10 H 270 V 20"
+              stroke="rgba(16,185,129,0.55)" stroke-dasharray="6 4" marker-end="url(#s6g)"/>
+        <text class="sv-lbl" x="843" y="8" text-anchor="middle" fill="rgba(16,185,129,0.5)">reads LTM on session start</text>
+
+        <!-- A: Root → DataGathering — orchestrates (vertical down, left lane) -->
+        <line class="sv-edge" x1="255" y1="220" x2="255" y2="310"
+              stroke="rgba(255,255,255,0.4)" marker-end="url(#s6w)"/>
+        <text class="sv-lbl" x="196" y="268" text-anchor="end" fill="rgba(255,255,255,0.35)">orchestrates</text>
+
+        <!-- B: DataGathering → Root — results return (vertical up, right lane, dashed) -->
+        <line class="sv-edge" x1="285" y1="310" x2="285" y2="220"
+              stroke="rgba(255,255,255,0.22)" stroke-dasharray="4 3" marker-end="url(#s6w)"/>
+        <text class="sv-lbl" x="293" y="268" text-anchor="start" fill="rgba(255,255,255,0.2)">results</text>
+
+        <!-- C: Root → SubmissionAgent — on confirm (orthogonal: right → gap → down → right → down) -->
+        <path class="sv-edge" d="M 480 120 H 580 V 280 H 840 V 310"
+              stroke="rgba(6,182,212,0.55)" stroke-dasharray="8 4" marker-end="url(#s6t)"/>
+        <text class="sv-lbl" x="672" y="274" text-anchor="middle" fill="rgba(6,182,212,0.5)">on user confirm</text>
+
+        <!-- E: SubmissionAgent → Memory — writes LTM (horizontal right) -->
+        <line class="sv-edge" x1="1040" y1="402" x2="1170" y2="402"
+              stroke="rgba(16,185,129,0.7)" marker-end="url(#s6g)"/>
+        <text class="sv-lbl" x="1105" y="394" text-anchor="middle" fill="rgba(16,185,129,0.55)">writes LTM</text>
+
+        <!-- F: DataGathering → sub-agents — parallel bus pattern (all orthogonal) -->
+        <line x1="270" y1="495" x2="270" y2="530" stroke="rgba(255,135,0,0.6)" stroke-width="1.5"/>
+        <line x1="175" y1="530" x2="860" y2="530" stroke="rgba(255,135,0,0.5)" stroke-width="1.5"/>
+        <line class="sv-edge" x1="175" y1="530" x2="175" y2="570" stroke="rgba(255,135,0,0.55)" marker-end="url(#s6a)"/>
+        <line class="sv-edge" x1="505" y1="530" x2="505" y2="570" stroke="rgba(255,135,0,0.55)" marker-end="url(#s6a)"/>
+        <line class="sv-edge" x1="860" y1="530" x2="860" y2="570" stroke="rgba(255,135,0,0.55)" marker-end="url(#s6a)"/>
+        <text class="sv-lbl" x="518" y="546" text-anchor="middle" fill="rgba(255,135,0,0.45)">parallel dispatch</text>
+
+        <!-- ====== NODES ====== -->
+
+        <!-- LEVEL 1: F1FantasyAdvisor (Root) -->
+        <rect x="60" y="20" width="420" height="200" rx="2"
+              stroke="rgba(225,6,0,0.65)" stroke-width="1.5" fill="rgba(225,6,0,0.09)"/>
+        <text class="sv-role" x="80" y="44" fill="#E10600">Root · Orchestrator</text>
+        <text class="sv-name" x="80" y="82" style="font-size:34px">F1FantasyAdvisor</text>
+        <text class="sv-model" x="80" y="104">Claude 3.5 Sonnet · Bedrock</text>
+        <text class="sv-det"   x="80" y="122">Reads LTM at session start</text>
+        <text class="sv-det"   x="80" y="137">Streams via AG-UI · SSE protocol</text>
+        <text class="sv-det"   x="80" y="152">Synthesises team recommendation</text>
+        <text class="sv-out"   x="80" y="196">→ TeamRecommendationCard</text>
+
+        <!-- LEVEL 2 LEFT: DataGathering (ParallelAgent) -->
+        <rect x="60" y="310" width="420" height="185" rx="2"
+              stroke="rgba(255,135,0,0.6)" stroke-width="1.5" fill="rgba(255,135,0,0.09)"/>
+        <text class="sv-role" x="80" y="334" fill="#FF8700">Parallel Execution</text>
+        <text class="sv-name" x="80" y="372">DataGathering</text>
+        <text class="sv-model" x="80" y="394">Google ADK ParallelAgent</text>
+        <text class="sv-det"   x="80" y="412">3 sub-agents run concurrently</text>
+        <text class="sv-det"   x="80" y="427">15–20s serial → 5–10s parallel</text>
+        <text class="sv-det"   x="80" y="442">Writes to session memory; Root reads after</text>
+
+        <!-- LEVEL 2 RIGHT: SubmissionAgent -->
+        <rect x="640" y="310" width="400" height="185" rx="2"
+              stroke="rgba(6,182,212,0.55)" stroke-width="1" fill="rgba(6,182,212,0.07)"/>
+        <text class="sv-role" x="660" y="334" fill="#06B6D4">Submission · On Confirm</text>
+        <text class="sv-name" x="660" y="372">SubmissionAgent</text>
+        <text class="sv-model" x="660" y="394">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"   x="660" y="412">validate_team tool</text>
+        <text class="sv-det"   x="660" y="427">submit_team tool</text>
+        <text class="sv-out"   x="660" y="468" style="fill:#10B981">→ writes LTM · persists picks</text>
+
+        <!-- SIDE PANEL: AgentCore Memory (right column, tall) -->
+        <rect x="1170" y="120" width="490" height="360" rx="2"
+              stroke="rgba(16,185,129,0.6)" stroke-width="1.5" fill="rgba(16,185,129,0.07)"/>
+        <text class="sv-role" x="1192" y="148" fill="#10B981">Persistent Memory</text>
+        <text class="sv-name" x="1192" y="188">AgentCore Memory</text>
+        <text class="sv-model" x="1192" y="210">AWS Bedrock AgentCore</text>
+        <line x1="1190" y1="226" x2="1650" y2="226" stroke="rgba(16,185,129,0.18)" stroke-width="1"/>
+        <text class="sv-lbl" x="1192" y="246" fill="rgba(16,185,129,0.6)" style="font-weight:700">SESSION MEMORY (STM)</text>
+        <text class="sv-det" x="1192" y="264">30-day session context</text>
+        <text class="sv-det" x="1192" y="279">f1_data · intel · fantasy_context</text>
+        <line x1="1190" y1="296" x2="1650" y2="296" stroke="rgba(16,185,129,0.18)" stroke-width="1"/>
+        <text class="sv-lbl" x="1192" y="316" fill="rgba(16,185,129,0.6)" style="font-weight:700">LONG-TERM MEMORY (LTM)</text>
+        <text class="sv-det" x="1192" y="334">90-day long-term history</text>
+        <text class="sv-det" x="1192" y="349">Accepted picks · chip history</text>
+        <text class="sv-det" x="1192" y="364">Stated preferences · patterns</text>
+
+        <!-- LEVEL 3: Sub-agents (dispatched in parallel by DataGathering) -->
+
+        <!-- F1DataAgent -->
+        <rect x="20" y="570" width="310" height="140" rx="2"
+              stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="rgba(255,255,255,0.04)"/>
+        <text class="sv-role" x="40" y="594" fill="rgba(240,242,245,0.38)">F1 Data</text>
+        <text class="sv-name" x="40" y="628" style="font-size:26px">F1DataAgent</text>
+        <text class="sv-model" x="40" y="648">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"   x="40" y="664">OpenF1 API · Jolpica</text>
+        <text class="sv-out"   x="40" y="698">→ state: f1_data</text>
+
+        <!-- IntelAgent (premium) -->
+        <rect x="350" y="570" width="310" height="140" rx="2"
+              stroke="rgba(139,92,246,0.5)" stroke-width="1" fill="rgba(139,92,246,0.07)"/>
+        <text class="sv-role" x="370" y="594" fill="#8B5CF6">Intelligence · Premium</text>
+        <text class="sv-name" x="370" y="628" style="font-size:26px">IntelAgent</text>
+        <text class="sv-model" x="370" y="648">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"   x="370" y="664">Weather · Odds · Reddit</text>
+        <text class="sv-out"   x="370" y="698">→ state: intel</text>
+
+        <!-- FantasyContextAgent -->
+        <rect x="680" y="570" width="360" height="140" rx="2"
+              stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="rgba(255,255,255,0.04)"/>
+        <text class="sv-role" x="700" y="594" fill="rgba(240,242,245,0.38)">Fantasy Context</text>
+        <text class="sv-name" x="700" y="628" style="font-size:26px">FantasyContext</text>
+        <text class="sv-model" x="700" y="648">Claude Haiku 3 · Bedrock</text>
+        <text class="sv-det"   x="700" y="664">Team · Prices · Rules</text>
+        <text class="sv-out"   x="700" y="698">→ state: fantasy_context</text>
+
+      </svg>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>GridWise</span><div class="sf-sep"></div>
+    <span class="sf-title">Agent Graph</span>
+    <span class="sf-num">06 / 09</span>
+  </div>
+</section>
+
+<!-- ===========================
+     SLIDE 7 — EXECUTION CHAIN (merged: activity + request chain)
+     =========================== -->
+<section class="slide" id="s7">
+  <div class="bg-stripes"></div>
+  <div class="red-stripe"></div>
+
+  <div class="content">
+    <div class="eyebrow reveal-left d1">End-to-End Flow</div>
+    <div class="slide-title reveal-left d2" style="font-size:72px;margin-bottom:16px;">The Execution Chain</div>
+
+    <div class="exec-chain reveal d3">
+
+      <!-- Phase 1: Session Init -->
+      <div class="phase-row">
+        <div class="phase-label">
+          <div class="ph-num">01</div>
+          <div class="ph-name">Session<br>Init</div>
+        </div>
+        <div class="phase-content">
+          <div class="ec-box"><div class="ec-name">User</div><div class="ec-sub">Browser</div></div>
+          <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">POST /sessions · Bearer JWT</div></div>
+          <div class="ec-box red"><div class="ec-name">FastAPI</div><div class="ec-sub">JWT → Cognito</div></div>
+          <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">returns</div></div>
+          <div class="ec-box"><div class="ec-name">session_id</div><div class="ec-sub">stored client-side</div></div>
+        </div>
+      </div>
+
+      <!-- Phase 2: Recommendation Request -->
+      <div class="phase-row">
+        <div class="phase-label">
+          <div class="ph-num">02</div>
+          <div class="ph-name">Rec.<br>Request</div>
+        </div>
+        <div class="phase-content">
+          <div class="ec-box"><div class="ec-name">User</div><div class="ec-sub">sends message</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">AG-UI POST /chat · JWT</div></div>
+          <div class="ec-box red"><div class="ec-name">FastAPI</div><div class="ec-sub">validates JWT</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">SigV4 POST + user JWT</div></div>
+          <div class="ec-box red"><div class="ec-name">AgentCore<br>Runtime</div><div class="ec-sub">AWS · us-east-1</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">starts agent graph</div></div>
+          <div class="ec-box red"><div class="ec-name">Root Agent</div><div class="ec-sub">F1FantasyAdvisor</div></div>
+          <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">reads LTM</div></div>
+          <div class="ec-box green"><div class="ec-name">AgentCore<br>Memory</div><div class="ec-sub">STM + LTM</div></div>
+        </div>
+      </div>
+
+      <!-- Phase 3: Parallel Gather -->
+      <div class="phase-row par">
+        <div class="phase-label">
+          <div class="ph-num">03</div>
+          <div class="ph-name">Parallel<br>Gather</div>
+        </div>
+        <div class="phase-content">
+          <div class="par-sub">
+            <div class="par-agent">F1DataAgent</div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">tool call</div></div>
+            <div class="ec-box amber"><div class="ec-name">Gateway</div><div class="ec-sub">JWT tier filter</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">SigV4 invoke</div></div>
+            <div class="ec-box amber"><div class="ec-name">Lambda<br>Proxy</div><div class="ec-sub">SigV4 signs</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">POST /agent/tools/*</div></div>
+            <div class="ec-box"><div class="ec-name">FastAPI<br>Tools</div><div class="ec-sub">11 endpoints</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
+            <div class="ec-box"><div class="ec-name">OpenF1<br>· Jolpica</div><div class="ec-sub">live data</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
+            <div class="ec-box green"><div class="ec-name">f1_data</div><div class="ec-sub">STM</div></div>
+          </div>
+          <div class="par-sub">
+            <div class="par-agent premium">IntelAgent<br><span style="font-size:8px;opacity:0.7">PREMIUM</span></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">tool call</div></div>
+            <div class="ec-box amber"><div class="ec-name">Gateway</div><div class="ec-sub">tier filter</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">SigV4 invoke</div></div>
+            <div class="ec-box amber"><div class="ec-name">Lambda<br>Proxy</div><div class="ec-sub">SigV4 signs</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">POST /agent/tools/*</div></div>
+            <div class="ec-box"><div class="ec-name">FastAPI<br>Tools</div><div class="ec-sub">11 endpoints</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
+            <div class="ec-box purple"><div class="ec-name">Weather<br>Odds Reddit</div><div class="ec-sub">premium APIs</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
+            <div class="ec-box green"><div class="ec-name">intel</div><div class="ec-sub">STM</div></div>
+          </div>
+          <div class="par-sub">
+            <div class="par-agent">FantasyCtx</div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">tool call</div></div>
+            <div class="ec-box amber"><div class="ec-name">Gateway</div><div class="ec-sub">tier filter</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">SigV4 invoke</div></div>
+            <div class="ec-box amber"><div class="ec-name">Lambda<br>Proxy</div><div class="ec-sub">SigV4 signs</div></div>
+            <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">POST /agent/tools/*</div></div>
+            <div class="ec-box"><div class="ec-name">FastAPI<br>Tools</div><div class="ec-sub">11 endpoints</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">HTTP</div></div>
+            <div class="ec-box"><div class="ec-name">F1 Fantasy<br>· MongoDB</div><div class="ec-sub">team + rules</div></div>
+            <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">writes</div></div>
+            <div class="ec-box green"><div class="ec-name">fantasy_<br>context</div><div class="ec-sub">STM</div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phase 4: Synthesis -->
+      <div class="phase-row">
+        <div class="phase-label">
+          <div class="ph-num">04</div>
+          <div class="ph-name">Synthesis</div>
+        </div>
+        <div class="phase-content">
+          <div class="ec-box red"><div class="ec-name">Root Agent</div><div class="ec-sub">reads STM</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">check rules · budget</div></div>
+          <div class="ec-box red"><div class="ec-name">Synthesise<br>Picks</div><div class="ec-sub">rules-first</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">STATE_SNAPSHOT</div></div>
+          <div class="ec-box teal"><div class="ec-name">CopilotKit</div><div class="ec-sub">AG-UI SSE</div></div>
+          <div class="ec-arr t"><div class="ec-line"></div><div class="ec-lbl">renders</div></div>
+          <div class="ec-box teal"><div class="ec-name">Team Reco<br>Card</div><div class="ec-sub">User reviews</div></div>
+        </div>
+      </div>
+
+      <!-- Phase 5: Confirm & Submit -->
+      <div class="phase-row">
+        <div class="phase-label">
+          <div class="ph-num">05</div>
+          <div class="ph-name">Confirm<br>&amp; Submit</div>
+        </div>
+        <div class="phase-content">
+          <div class="ec-box"><div class="ec-name">User</div><div class="ec-sub">clicks Apply</div></div>
+          <div class="ec-arr r"><div class="ec-line"></div><div class="ec-lbl">AG-UI interrupt</div></div>
+          <div class="ec-box teal"><div class="ec-name">Submission<br>Agent</div><div class="ec-sub">Haiku</div></div>
+          <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">validate_team</div></div>
+          <div class="ec-box"><div class="ec-name">RuleEngine</div><div class="ec-sub">MongoDB rules</div></div>
+          <div class="ec-arr a"><div class="ec-line"></div><div class="ec-lbl">submit_team</div></div>
+          <div class="ec-box"><div class="ec-name">Team<br>Service</div><div class="ec-sub">MongoDB</div></div>
+          <div class="ec-arr"><div class="ec-line"></div><div class="ec-lbl">accepted picks</div></div>
+          <div class="ec-box green"><div class="ec-name">Write<br>LTM</div><div class="ec-sub">90-day store</div></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>GridWise</span><div class="sf-sep"></div>
+    <span class="sf-title">Execution Chain</span>
+    <span class="sf-num">07 / 09</span>
+  </div>
+</section>
+
+
+<!-- ===========================
+     SLIDE 9 — TECH DECISIONS
+     =========================== -->
+<section class="slide" id="s9">
+  <div class="bg-stripes"></div>
+  <div class="red-stripe"></div>
+
+  <div class="content">
+    <div class="eyebrow reveal-left d1">Engineering</div>
+    <div class="slide-title reveal-left d2" style="font-size:80px;margin-bottom:12px;">Four Decisions That Matter</div>
+
+    <div class="dec-grid reveal d3">
+      <div class="dec-card">
+        <div class="dc-num">Decision 01</div>
+        <div class="dc-title">user_id never an LLM argument</div>
+        <div class="dc-body">Extracted from Cognito JWT in FastAPI middleware. Injected directly into ADK session state. Tools read it from session_state — the LLM never sees it.</div>
+        <div class="dc-result">→ Prevents prompt injection from escalating to cross-user data access</div>
+      </div>
+      <div class="dec-card">
+        <div class="dc-num">Decision 02</div>
+        <div class="dc-title">Rules checked before synthesis</div>
+        <div class="dc-body">FantasyContextAgent fetches active rules during data gathering and writes them to short-term memory. Root agent reads them before proposing any picks.</div>
+        <div class="dc-result">→ Eliminates the validate→revise loop; submission is a safety net</div>
+      </div>
+      <div class="dec-card">
+        <div class="dc-num">Decision 03</div>
+        <div class="dc-title">Parallel data gathering</div>
+        <div class="dc-body">Three sub-agents run concurrently via ADK ParallelAgent. Each writes to session memory independently. Root reads after all three complete.</div>
+        <div class="dc-result">→ Total latency 15–20s sequential reduced to 5–10s</div>
+      </div>
+      <div class="dec-card">
+        <div class="dc-num">Decision 04</div>
+        <div class="dc-title">Tier filtering via Gateway JWT</div>
+        <div class="dc-body">User's Cognito JWT (custom:tier) is forwarded to AgentCore Gateway as Bearer token. Gateway uses it to filter available tools via semantic discovery.</div>
+        <div class="dc-result">→ Free: 8 tools. Premium: all 11 (weather, odds, Reddit)</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-footer">
+    <span>GridWise</span><div class="sf-sep"></div>
+    <span class="sf-title">Technical Decisions</span>
+    <span class="sf-num">08 / 09</span>
+  </div>
+</section>
+
+<!-- ===========================
+     SLIDE 10 — STATUS
+     =========================== -->
+<section class="slide" id="s10">
+  <div class="bg-stripes"></div>
+  <div class="red-stripe"></div>
+
+  <div class="content">
+    <div style="grid-column:1/-1">
+      <div class="eyebrow reveal-left d1">Project Status</div>
+      <div class="slide-title reveal-left d2" style="font-size:80px;margin-bottom:24px;">Where We Are</div>
+    </div>
+
+    <div class="reveal d3">
+      <div class="col-label" style="color:var(--green);border-bottom-color:var(--green)">Deployed &amp; Verified</div>
+      <div class="check-item done">
+        <div class="ci-icon">DONE</div>
+        <div><div class="ci-text">Foundation Stack</div><div class="ci-sub">IAM · Cognito · Secrets Manager · ECR</div></div>
+      </div>
+      <div class="check-item done">
+        <div class="ci-icon">DONE</div>
+        <div><div class="ci-text">Agent Stack</div><div class="ci-sub">AgentCore Gateway · Runtime CR · Lambda proxy</div></div>
+      </div>
+      <div class="check-item done">
+        <div class="ci-icon">DONE</div>
+        <div><div class="ci-text">AgentCore Memory</div><div class="ci-sub">STM + LTM stores via create_memory_resources.py</div></div>
+      </div>
+      <div class="check-item done">
+        <div class="ci-icon">DONE</div>
+        <div><div class="ci-text">Full Agent Graph + 11 Tools</div><div class="ci-sub">All endpoints · SigV4 chain · tier filtering</div></div>
+      </div>
+      <div class="check-item done">
+        <div class="ci-icon">DONE</div>
+        <div><div class="ci-text">Apply Recommendation Flow</div><div class="ci-sub">CopilotKit STATE_SNAPSHOT → TeamRecommendationCard → submit</div></div>
+      </div>
+    </div>
+
+    <div class="reveal d4">
+      <div class="col-label">Roadmap</div>
+      <div class="check-item next">
+        <div class="ci-icon">NEXT</div>
+        <div><div class="ci-text">End-to-End Integration Tests</div><div class="ci-sub">Agent graph · tool chain · memory read/write</div></div>
+      </div>
+      <div class="check-item next">
+        <div class="ci-icon">NEXT</div>
+        <div><div class="ci-text">Cloud Hosting (App Runner)</div><div class="ci-sub">FastAPI + React deployed · lambda FASTAPI_BASE_URL updated</div></div>
+      </div>
+      <div class="check-item next">
+        <div class="ci-icon">NEXT</div>
+        <div><div class="ci-text">Streaming Responses</div><div class="ci-sub">Token-level deltas from AgentCore Runtime</div></div>
+      </div>
+      <div class="check-item next">
+        <div class="ci-icon">NEXT</div>
+        <div><div class="ci-text">Type-Safe Frontend Contract</div><div class="ci-sub">OpenAPI code generation · replace manual type sync</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer-red reveal d5">
+    <span>Zeal Patel</span><div class="fr-sep"></div>
+    <span>GridWise — AI-Powered F1 Fantasy Intelligence</span><div class="fr-sep"></div>
+    <span>June 2026</span>
+  </div>
+</section>
+
+</main><!-- /.deck-stage -->
+</div><!-- /.deck-viewport -->
+
+<!-- Inline editor affordance -->
+<div class="edit-hotzone" id="editHotzone"></div>
+<button class="edit-toggle" id="editToggle">✏ EDIT</button>
+
+<script>
+/* ============================================
+   SLIDE PRESENTATION CONTROLLER
+   ============================================ */
+class SlidePresentation {
+  constructor() {
+    this.slides = Array.from(document.querySelectorAll('.slide'));
+    this.current = 0;
+    this.stage = document.getElementById('deckStage');
+    this.total = this.slides.length;
+    this.scaleStage();
+    this.bindKeys();
+    this.bindTouch();
+    this.bindWheel();
+    this.show(0);
+  }
+
+  scaleStage() {
+    const scale = () => {
+      const f = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+      const x = (window.innerWidth - 1920 * f) / 2;
+      const y = (window.innerHeight - 1080 * f) / 2;
+      this.stage.style.transform = `translate(${x}px,${y}px) scale(${f})`;
+    };
+    scale();
+    window.addEventListener('resize', scale);
+  }
+
+  show(n) {
+    n = Math.max(0, Math.min(n, this.total - 1));
+    this.slides.forEach((s, i) => {
+      const active = i === n;
+      s.classList.toggle('active', active);
+      // Add .visible with tiny delay so CSS transitions trigger
+      if (active) {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => s.classList.add('visible'));
+        });
+      } else {
+        s.classList.remove('visible');
+      }
+    });
+    this.current = n;
+    this.updateCounter();
+  }
+
+  updateCounter() {
+    const el = document.getElementById('slideCounter');
+    if (el) el.textContent = `${this.current + 1} / ${this.total}`;
+  }
+
+  next() { this.show(this.current + 1); }
+  prev() { this.show(this.current - 1); }
+
+  bindKeys() {
+    document.addEventListener('keydown', e => {
+      if (e.target.getAttribute('contenteditable')) return;
+      const map = {
+        ArrowRight: () => this.next(), ArrowDown: () => this.next(),
+        ArrowLeft:  () => this.prev(), ArrowUp:   () => this.prev(),
+        ' ':        () => this.next(), PageDown:  () => this.next(),
+        PageUp:     () => this.prev(), Home:      () => this.show(0),
+        End:        () => this.show(this.total - 1),
+      };
+      if (map[e.key]) { e.preventDefault(); map[e.key](); }
+    });
+  }
+
+  bindTouch() {
+    let sx, sy;
+    document.addEventListener('touchstart', e => {
+      sx = e.touches[0].clientX; sy = e.touches[0].clientY;
+    }, { passive: true });
+    document.addEventListener('touchend', e => {
+      if (!sx) return;
+      const dx = e.changedTouches[0].clientX - sx;
+      const dy = e.changedTouches[0].clientY - sy;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+        dx < 0 ? this.next() : this.prev();
+      }
+      sx = sy = null;
+    }, { passive: true });
+  }
+
+  bindWheel() {
+    let last = 0;
+    document.addEventListener('wheel', e => {
+      e.preventDefault();
+      const now = Date.now();
+      if (now - last < 600) return;
+      last = now;
+      e.deltaY > 0 ? this.next() : this.prev();
+    }, { passive: false });
+  }
+}
+
+/* ============================================
+   INLINE EDITOR
+   ============================================ */
+class InlineEditor {
+  constructor() {
+    this.isActive = false;
+    this.toggle = document.getElementById('editToggle');
+    this.hotzone = document.getElementById('editHotzone');
+    this.hideTimer = null;
+    this.bindHover();
+    this.bindKey();
+    this.loadSaved();
+  }
+
+  bindHover() {
+    const show = () => { clearTimeout(this.hideTimer); this.toggle.classList.add('show'); };
+    const hide = () => {
+      this.hideTimer = setTimeout(() => {
+        if (!this.isActive) this.toggle.classList.remove('show');
+      }, 400);
+    };
+    this.hotzone.addEventListener('mouseenter', show);
+    this.hotzone.addEventListener('mouseleave', hide);
+    this.toggle.addEventListener('mouseenter', show);
+    this.toggle.addEventListener('mouseleave', hide);
+    this.hotzone.addEventListener('click', () => this.toggleEditMode());
+    this.toggle.addEventListener('click', () => this.toggleEditMode());
+  }
+
+  bindKey() {
+    document.addEventListener('keydown', e => {
+      if ((e.key === 'e' || e.key === 'E') && !e.target.getAttribute('contenteditable')) {
+        this.toggleEditMode();
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 's' && this.isActive) {
+        e.preventDefault();
+        this.save();
+      }
+    });
+  }
+
+  toggleEditMode() {
+    this.isActive = !this.isActive;
+    document.body.classList.toggle('edit-mode-active', this.isActive);
+    this.toggle.textContent = this.isActive ? '💾 SAVE (Ctrl+S)' : '✏ EDIT';
+    this.toggle.classList.toggle('active', this.isActive);
+
+    const editables = document.querySelectorAll(
+      '.big-statement, .pain-text, .cap-name, .cap-desc, .slide-title, .dc-title, .dc-body, .dc-result, .ci-text, .ci-sub, .fn-name, .fn-detail, .ca-name, .ca-sub, .ca-label, .an-name, .an-tools'
+    );
+    editables.forEach(el => {
+      if (this.isActive) el.setAttribute('contenteditable', 'true');
+      else el.removeAttribute('contenteditable');
+    });
+
+    if (!this.isActive) this.save();
+  }
+
+  save() {
+    const data = {};
+    document.querySelectorAll('[contenteditable]').forEach((el, i) => {
+      const key = el.className.split(' ')[0] + '_' + i;
+      data[key] = el.innerHTML;
+    });
+    localStorage.setItem('gridwise_slides', JSON.stringify(data));
+    this.toggle.textContent = '✓ SAVED';
+    setTimeout(() => { this.toggle.textContent = this.isActive ? '💾 SAVE (Ctrl+S)' : '✏ EDIT'; }, 1500);
+  }
+
+  loadSaved() {
+    try {
+      const saved = JSON.parse(localStorage.getItem('gridwise_slides') || '{}');
+      // Load saved edits if present (elements must match order)
+      const els = document.querySelectorAll('.big-statement,.pain-text,.cap-name,.cap-desc,.slide-title,.dc-title,.dc-body,.dc-result,.ci-text,.ci-sub,.fn-name,.fn-detail,.ca-name,.ca-sub,.ca-label,.an-name,.an-tools');
+      els.forEach((el, i) => {
+        const key = el.className.split(' ')[0] + '_' + i;
+        if (saved[key]) el.innerHTML = saved[key];
+      });
+    } catch(e) {}
+  }
+}
+
+/* ============================================
+   INIT
+   ============================================ */
+const deck = new SlidePresentation();
+const editor = new InlineEditor();
+</script>
+</body>
+</html>
