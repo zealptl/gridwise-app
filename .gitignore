@@ -9,3 +9,10 @@ secrets.local.env
 
 # CDK synthesized output — regenerated on every cdk synth
 cdk.out/
+
+service/infra/dist
+
+aws-agentcore
+.vercel
+
+*env*

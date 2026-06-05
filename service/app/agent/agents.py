@@ -7,8 +7,8 @@ from typing import Optional
 
 logger = logging.getLogger(__name__)
 
-HAIKU = "bedrock/anthropic.claude-3-haiku-20240307-v1:0"
-SONNET = "bedrock/anthropic.claude-3-5-sonnet-20241022-v2:0"
+HAIKU = "bedrock/us.anthropic.claude-haiku-4-5-20251001-v1:0"
+SONNET = "bedrock/us.anthropic.claude-sonnet-4-5-20250929-v1:0"
 
 ADVISOR_SYSTEM_PROMPT = """You are the GridWise F1 Fantasy Advisor — an expert AI assistant that helps users optimise their F1 Fantasy team.
 
@@ -162,17 +162,6 @@ def _build_submission_agent(gateway):
     )
 
 
-async def _persist_session_callback(callback_context) -> None:
-    """Persist completed session to long-term memory after each turn."""
-    try:
-        session = callback_context.session
-        memory_service = callback_context.memory_service
-        if memory_service and session:
-            await memory_service.add_session_to_memory(session)
-    except Exception as exc:
-        logger.warning("after_agent_callback: session persist failed: %s", exc)
-
-
 def build_f1_advisor_graph(user_jwt: Optional[str] = None, user_id: str = "anonymous"):
     """Build and return the complete F1 Fantasy Advisor agent graph.
 
@@ -193,8 +182,10 @@ def build_f1_advisor_graph(user_jwt: Optional[str] = None, user_id: str = "anony
         ) from exc
 
     try:
-        from app.agent.memory import AgentCoreMemoryService, get_memory_service  # noqa: F401
-        from app.agent.session import AgentCoreSessionService, get_session_service  # noqa: F401
+        from app.agent.memory import AgentCoreMemoryService  # noqa: F401
+        from app.agent.memory import get_memory_service
+        from app.agent.session import AgentCoreSessionService  # noqa: F401
+        from app.agent.session import get_session_service
     except ImportError:
         def get_memory_service():
             return None
@@ -212,6 +203,14 @@ def build_f1_advisor_graph(user_jwt: Optional[str] = None, user_id: str = "anony
 
     session_service = get_session_service()
     memory_svc = get_memory_service()
+
+    async def _persist_session_callback(callback_context) -> None:
+        try:
+            session = callback_context.session
+            if memory_svc and session:
+                await memory_svc.add_session_to_memory(session)
+        except Exception as exc:
+            logger.warning("after_agent_callback: session persist failed: %s", exc)
 
     gateway = AgentCoreGateway(jwt=user_jwt)
     data_gathering = _build_data_gathering_agent(gateway)

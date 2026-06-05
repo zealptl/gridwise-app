@@ -24,10 +24,9 @@ async def lifespan(app: FastAPI):
 
     # Startup: Verify AgentCore Gateway connectivity (non-fatal)
     try:
-        from app.agent.gateway import AgentCoreGateway
+        from app.agent.gateway import verify_gateway_connection
 
-        gw = AgentCoreGateway()
-        if not gw.verify_gateway_connection():
+        if not verify_gateway_connection():
             logger.warning("AgentCore Gateway not reachable at startup")
     except Exception as exc:
         logger.warning("Could not verify AgentCore Gateway: %s", exc)

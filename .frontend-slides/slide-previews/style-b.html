@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridWise — Style B Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;900&family=IBM+Plex+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+/* === VIEWPORT BASE CSS (mandatory) === */
+html, body { width:100%; height:100%; margin:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-viewport { position:fixed; inset:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-stage { position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:hidden; transform-origin:0 0; background:var(--slide-bg,#fff); }
+.slide { position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; display:block; visibility:hidden; opacity:0; pointer-events:none; background:var(--slide-bg,#fff); }
+.slide.active, .slide.visible { visibility:visible; opacity:1; pointer-events:auto; z-index:1; }
+img,video,canvas,svg { max-width:100%; max-height:100%; }
+.deck-controls { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:1000; }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:0.01ms !important; transition-duration:0.2s !important; } }
+
+/* === STUDIO: TYPE AS GRAPHIC MASS === */
+:root {
+  --stage-bg: #1C1C1C;
+  --slide-bg: #1C1C1C;
+  --black: #1C1C1C;
+  --black-alt: #242422;
+  --yellow: #F5D200;
+  --yellow-dim: rgba(245,210,0,0.12);
+  --border: #2E2E2C;
+  --mono: 'IBM Plex Mono', monospace;
+}
+
+.slide { background:#1C1C1C; font-family:'Barlow', sans-serif; }
+
+/* === LAYOUT STRUCTURE === */
+
+/* Yellow block — bottom third, full width */
+.yellow-block {
+  position:absolute; bottom:0; left:0; right:0; height:200px; z-index:1;
+  background:var(--yellow);
+  clip-path: polygon(0 30px, 1920px 0, 1920px 200px, 0 200px);
+}
+
+/* Top thin border line */
+.top-line {
+  position:absolute; top:0; left:0; right:0; height:4px; z-index:5;
+  background:var(--yellow);
+}
+
+/* === MAIN TITLE — TYPE AS GRAPHIC MASS === */
+.title-block {
+  position:absolute; top:0; left:80px; z-index:10;
+  padding-top:80px;
+  opacity:0;
+  animation: slam-in 0.5s 0.1s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+.title-main {
+  font-size:340px; font-weight:900; letter-spacing:-0.04em; line-height:0.82;
+  text-transform:uppercase; color:var(--yellow);
+  display:block; margin:0;
+}
+
+/* === SUBTITLE — on the yellow block === */
+.subtitle-block {
+  position:absolute; bottom:40px; left:80px; right:80px; z-index:10;
+  display:flex; justify-content:space-between; align-items:flex-end;
+  opacity:0; animation: fade-in 0.4s 0.45s ease forwards;
+}
+
+.subtitle-text {
+  font-size:36px; font-weight:500; text-transform:uppercase;
+  letter-spacing:0.03em; color:var(--black); line-height:1.2;
+  max-width:1100px;
+}
+
+.slide-num {
+  font-family:var(--mono); font-size:28px; font-weight:700;
+  color:var(--black); letter-spacing:0.04em; white-space:nowrap;
+  align-self:flex-end;
+}
+
+/* === TOP RIGHT METADATA === */
+.meta-top {
+  position:absolute; top:80px; right:80px; z-index:10;
+  text-align:right;
+  opacity:0; animation: fade-in 0.4s 0.6s ease forwards;
+}
+
+.meta-date {
+  font-family:var(--mono); font-size:15px; font-weight:400;
+  color:rgba(245,210,0,0.5); letter-spacing:0.12em; text-transform:uppercase;
+  display:block; margin-bottom:6px;
+}
+
+.meta-author {
+  font-family:var(--mono); font-size:15px; font-weight:700;
+  color:rgba(245,210,0,0.7); letter-spacing:0.12em; text-transform:uppercase;
+  display:block;
+}
+
+/* === VERTICAL SIDE TAG === */
+.side-tag {
+  position:absolute; left:calc(-1 * (340px - 80px)); top:50%; z-index:10;
+  font-family:var(--mono); font-size:11px; font-weight:400;
+  color:rgba(245,210,0,0.25); letter-spacing:0.2em; text-transform:uppercase;
+  white-space:nowrap; transform:rotate(-90deg) translateX(-50%);
+  transform-origin:center center;
+}
+
+/* === DECORATIVE — thin horizontal rules === */
+.rule-1 {
+  position:absolute; bottom:200px; left:80px; right:80px; height:1px; z-index:5;
+  background:rgba(245,210,0,0.12);
+}
+
+/* === ANIMATIONS === */
+@keyframes slam-in {
+  from { opacity:0; transform:translateX(-60px); }
+  to { opacity:1; transform:translateX(0); }
+}
+@keyframes fade-in {
+  from { opacity:0; }
+  to { opacity:1; }
+}
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+  <div class="deck-stage">
+    <div class="slide active">
+      <div class="top-line"></div>
+      <div class="yellow-block"></div>
+      <div class="rule-1"></div>
+
+      <div class="title-block">
+        <span class="title-main">GRID<br>WISE</span>
+      </div>
+
+      <div class="meta-top">
+        <span class="meta-date">June 2026</span>
+        <span class="meta-author">Zeal Patel</span>
+      </div>
+
+      <div class="subtitle-block">
+        <div class="subtitle-text">AI-Powered F1 Fantasy Intelligence<br>Multi-Agent Architecture</div>
+        <div class="slide-num">01 / 10</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function scaleStage(){
+  const s=document.querySelector('.deck-stage');
+  const vw=window.innerWidth, vh=window.innerHeight;
+  const sc=Math.min(vw/1920, vh/1080);
+  const tx=(vw-1920*sc)/2, ty=(vh-1080*sc)/2;
+  s.style.transform=`translate(${tx}px,${ty}px) scale(${sc})`;
+}
+scaleStage(); window.addEventListener('resize', scaleStage);
+</script>
+</body>
+</html>

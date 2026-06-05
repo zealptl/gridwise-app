@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridWise — Style A Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+/* === VIEWPORT BASE CSS (mandatory) === */
+html, body { width:100%; height:100%; margin:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-viewport { position:fixed; inset:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-stage { position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:hidden; transform-origin:0 0; background:var(--slide-bg,#fff); }
+.slide { position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; display:block; visibility:hidden; opacity:0; pointer-events:none; background:var(--slide-bg,#fff); }
+.slide.active, .slide.visible { visibility:visible; opacity:1; pointer-events:auto; z-index:1; }
+img,video,canvas,svg { max-width:100%; max-height:100%; }
+.deck-controls { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:1000; }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:0.01ms !important; transition-duration:0.2s !important; } }
+
+/* === NEON CYBER === */
+:root {
+  --stage-bg: #040b14;
+  --slide-bg: #040b14;
+  --cyan: #00e5c4;
+  --cyan-dim: rgba(0,229,196,0.15);
+  --magenta: #e0139d;
+  --white: #ecf4ff;
+  --muted: rgba(236,244,255,0.45);
+  --mono: 'Space Mono', monospace;
+}
+
+.slide { background: #040b14; font-family: 'Rajdhani', sans-serif; }
+
+/* dot grid background */
+.bg-grid {
+  position:absolute; inset:0; z-index:0;
+  background-image: radial-gradient(circle, rgba(0,229,196,0.14) 1.2px, transparent 1.2px);
+  background-size: 56px 56px;
+  animation: grid-breathe 5s ease-in-out infinite;
+}
+
+/* top edge scan line */
+.scan-line {
+  position:absolute; top:0; left:0; right:0; height:2px; z-index:2;
+  background: linear-gradient(90deg, transparent 0%, var(--cyan) 30%, var(--magenta) 70%, transparent 100%);
+  opacity:0.7;
+  animation: scan 3s ease-in-out infinite alternate;
+}
+
+/* left vertical accent */
+.v-bar {
+  position:absolute; left:72px; top:80px; bottom:80px; width:3px; z-index:5;
+  background: linear-gradient(180deg, transparent 0%, var(--cyan) 15%, var(--cyan) 85%, transparent 100%);
+  opacity:0.55;
+}
+
+/* corner brackets */
+.corner { position:absolute; width:44px; height:44px; z-index:5; }
+.corner.tl { top:60px; left:60px; border-left:2px solid var(--cyan); border-top:2px solid var(--cyan); }
+.corner.tr { top:60px; right:60px; border-right:2px solid var(--cyan); border-top:2px solid var(--cyan); }
+.corner.bl { bottom:60px; left:60px; border-left:2px solid var(--cyan); border-bottom:2px solid var(--cyan); }
+.corner.br { bottom:60px; right:60px; border-right:2px solid var(--cyan); border-bottom:2px solid var(--cyan); }
+
+/* right circuit lines */
+.circuit-panel {
+  position:absolute; right:0; top:0; width:580px; height:1080px; z-index:1;
+  opacity:0.05;
+  background:
+    repeating-linear-gradient(90deg, transparent 0px, transparent 58px, rgba(0,229,196,1) 58px, rgba(0,229,196,1) 60px),
+    repeating-linear-gradient(0deg, transparent 0px, transparent 118px, rgba(0,229,196,1) 118px, rgba(0,229,196,1) 120px);
+}
+
+/* magenta accent dot */
+.accent-node {
+  position:absolute; right:380px; top:260px; z-index:6;
+  width:14px; height:14px; border-radius:50%;
+  background:var(--magenta);
+  box-shadow: 0 0 24px var(--magenta), 0 0 60px rgba(224,19,157,0.4);
+  animation: node-pulse 1.8s ease-in-out infinite;
+}
+.accent-node::after {
+  content:''; position:absolute; top:50%; left:50%; width:40px; height:40px;
+  border:1px solid rgba(224,19,157,0.3); border-radius:50%;
+  transform:translate(-50%,-50%);
+  animation: ring-expand 1.8s ease-in-out infinite;
+}
+
+/* main content area */
+.content { position:absolute; left:148px; top:50%; transform:translateY(-50%); z-index:10; max-width:1200px; }
+
+.eyebrow {
+  font-family: var(--mono); font-size:18px; letter-spacing:0.28em;
+  text-transform:uppercase; color:var(--cyan); margin-bottom:28px;
+  opacity:0;
+  animation: fade-up 0.7s 0.1s ease forwards;
+}
+
+.eyebrow::before { content:'> '; opacity:0.5; }
+
+.title {
+  font-size:196px; font-weight:700; line-height:0.88; text-transform:uppercase;
+  letter-spacing:-0.015em; color:var(--white); margin:0 0 48px;
+  text-shadow: 0 0 80px rgba(0,229,196,0.35), 0 0 200px rgba(0,229,196,0.1);
+  opacity:0; animation: glow-in 0.9s 0.3s ease forwards;
+}
+.title .hi { color:var(--cyan); text-shadow: 0 0 60px var(--cyan), 0 0 120px rgba(0,229,196,0.5); }
+
+.subtitle {
+  font-size:34px; font-weight:300; letter-spacing:0.1em; text-transform:uppercase;
+  color:var(--muted); line-height:1.4; max-width:900px;
+  opacity:0; animation: fade-up 0.7s 0.55s ease forwards;
+}
+
+/* right vertical label */
+.side-label {
+  position:absolute; right:108px; top:50%; transform:translateY(-50%) rotate(90deg);
+  font-family:var(--mono); font-size:12px; letter-spacing:0.22em;
+  color:rgba(0,229,196,0.35); text-transform:uppercase; white-space:nowrap; z-index:10;
+}
+
+/* bottom meta bar */
+.meta {
+  position:absolute; bottom:68px; left:148px; right:148px; z-index:10;
+  display:flex; justify-content:space-between; align-items:center;
+  font-family:var(--mono); font-size:13px; letter-spacing:0.16em;
+  color:rgba(0,229,196,0.4); text-transform:uppercase;
+  border-top:1px solid rgba(0,229,196,0.12); padding-top:18px;
+  opacity:0; animation: fade-up 0.7s 0.8s ease forwards;
+}
+.meta-tag { display:flex; align-items:center; gap:10px; }
+.meta-tag::before { content:''; width:6px; height:6px; border-radius:50%; background:var(--cyan); opacity:0.6; }
+
+/* status indicator */
+.status {
+  position:absolute; top:72px; right:148px; z-index:10;
+  font-family:var(--mono); font-size:13px; letter-spacing:0.16em;
+  color:rgba(0,229,196,0.5); text-transform:uppercase;
+  display:flex; align-items:center; gap:10px;
+}
+.status-dot {
+  width:8px; height:8px; border-radius:50%; background:var(--cyan);
+  box-shadow:0 0 10px var(--cyan);
+  animation: status-blink 1.2s ease-in-out infinite;
+}
+
+@keyframes grid-breathe { 0%,100%{opacity:0.85} 50%{opacity:1} }
+@keyframes scan { from{transform:scaleX(0.6) translateX(-20%)} to{transform:scaleX(1) translateX(0)} }
+@keyframes node-pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.4)} }
+@keyframes ring-expand { 0%{transform:translate(-50%,-50%) scale(1);opacity:0.3} 100%{transform:translate(-50%,-50%) scale(3);opacity:0} }
+@keyframes glow-in { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+@keyframes fade-up { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+@keyframes status-blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+  <div class="deck-stage">
+    <div class="slide active">
+      <div class="bg-grid"></div>
+      <div class="scan-line"></div>
+      <div class="v-bar"></div>
+      <div class="corner tl"></div>
+      <div class="corner tr"></div>
+      <div class="corner bl"></div>
+      <div class="corner br"></div>
+      <div class="circuit-panel"></div>
+      <div class="accent-node"></div>
+
+      <div class="status">
+        <div class="status-dot"></div>
+        SYSTEM ONLINE
+      </div>
+
+      <div class="content">
+        <div class="eyebrow">F1 Fantasy Intelligence Platform</div>
+        <div class="title">GRID<span class="hi">WISE</span></div>
+        <div class="subtitle">Multi-Agent AI Advisor &mdash; AWS Bedrock AgentCore</div>
+      </div>
+
+      <div class="side-label">Claude 3.5 Sonnet · Google ADK · 6 Agents · 11 Tools</div>
+
+      <div class="meta">
+        <div class="meta-tag">ZEAL PATEL</div>
+        <div class="meta-tag">AWS BEDROCK AGENTCORE</div>
+        <div class="meta-tag">JUNE 2026</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function scaleStage(){
+  const s=document.querySelector('.deck-stage');
+  const vw=window.innerWidth, vh=window.innerHeight;
+  const sc=Math.min(vw/1920, vh/1080);
+  const tx=(vw-1920*sc)/2, ty=(vh-1080*sc)/2;
+  s.style.transform=`translate(${tx}px,${ty}px) scale(${sc})`;
+}
+scaleStage(); window.addEventListener('resize', scaleStage);
+</script>
+</body>
+</html>

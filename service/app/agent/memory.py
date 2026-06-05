@@ -7,13 +7,15 @@ import logging
 import os
 from typing import Optional
 
+from google.adk.memory.base_memory_service import BaseMemoryService  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 MEMORY_ID_SSM = "/gridwise/agentcore/memory-id"
 
 
-class AgentCoreMemoryService:
+class AgentCoreMemoryService(BaseMemoryService):
     """Google ADK BaseMemoryService backed by AWS AgentCore long-term memory.
 
     Uses USER_PREFERENCE + SEMANTIC extraction strategies.
@@ -44,7 +46,7 @@ class AgentCoreMemoryService:
                 logger.warning("Could not create MemoryClient: %s", exc)
         return self._client
 
-    async def search_memory(self, app_name: str, user_id: str, query: str):
+    async def search_memory(self, *, app_name: str, user_id: str, query: str):
         """Search long-term memory for context relevant to query.
 
         Returns SearchMemoryResponse with combined MemoryEntry objects.

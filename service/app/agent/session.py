@@ -7,13 +7,15 @@ import logging
 import os
 from typing import Optional
 
+from google.adk.sessions.base_session_service import BaseSessionService  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 AWS_REGION = os.getenv("AWS_REGION", "us-east-1")
 SESSION_MEMORY_ID_SSM = "/gridwise/agentcore/session-memory-id"
 
 
-class AgentCoreSessionService:
+class AgentCoreSessionService(BaseSessionService):
     """Google ADK BaseSessionService backed by AWS AgentCore session store Memory resource.
 
     Each ADK Event is JSON-serialized and stored via create_event.
@@ -50,7 +52,7 @@ class AgentCoreSessionService:
     def _session_key(self, app_name: str, session_id: str) -> str:
         return f"{app_name}__{session_id}"
 
-    async def create_session(self, app_name: str, user_id: str, state: Optional[dict] = None, session_id: Optional[str] = None):
+    async def create_session(self, *, app_name: str, user_id: str, state: Optional[dict] = None, session_id: Optional[str] = None):
         """Create a new session. Stores in _pending_sessions until first event is appended."""
         try:
             from google.adk.sessions.base_session_service import Session  # type: ignore
@@ -82,7 +84,7 @@ class AgentCoreSessionService:
         except ImportError:
             return None
 
-    async def get_session(self, app_name: str, user_id: str, session_id: str, config=None):
+    async def get_session(self, *, app_name: str, user_id: str, session_id: str, config=None):
         """Retrieve session by replaying events from AgentCore or from _pending_sessions cache."""
         key = self._session_key(app_name, session_id)
         client = self._get_client()
@@ -132,7 +134,7 @@ class AgentCoreSessionService:
 
         return self._pending_sessions.get(key)
 
-    async def list_sessions(self, app_name: str, user_id: str):
+    async def list_sessions(self, *, app_name: str, user_id: Optional[str] = None):
         """List sessions for a user (returns pending sessions only for now)."""
         prefix = f"{app_name}__"
         sessions = [
@@ -145,19 +147,21 @@ class AgentCoreSessionService:
         except ImportError:
             return sessions
 
-    async def delete_session(self, app_name: str, user_id: str, session_id: str) -> None:
+    async def delete_session(self, *, app_name: str, user_id: str, session_id: str) -> None:
         """Remove session from pending cache."""
         key = self._session_key(app_name, session_id)
         self._pending_sessions.pop(key, None)
 
-    async def append_event(self, session, event) -> None:
+    async def append_event(self, session, event):
         """Persist a single ADK event to the AgentCore session store."""
+        event = await super().append_event(session, event)
+
         if getattr(event, "partial", False):
-            return
+            return event
 
         client = self._get_client()
         if not client or not self.memory_id:
-            return
+            return event
 
         try:
             payload = event.model_dump_json(by_alias=True, exclude_none=True)
@@ -170,6 +174,8 @@ class AgentCoreSessionService:
             )
         except Exception as exc:
             logger.warning("append_event failed: %s", exc)
+
+        return event
 
 
 def get_session_service() -> Optional[AgentCoreSessionService]:

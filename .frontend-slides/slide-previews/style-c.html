@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GridWise — Style C Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@300;400;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* === VIEWPORT BASE CSS (mandatory) === */
+html, body { width:100%; height:100%; margin:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-viewport { position:fixed; inset:0; overflow:hidden; background:var(--stage-bg,#000); }
+.deck-stage { position:absolute; left:0; top:0; width:1920px; height:1080px; overflow:hidden; transform-origin:0 0; background:var(--slide-bg,#fff); }
+.slide { position:absolute; inset:0; width:1920px; height:1080px; overflow:hidden; display:block; visibility:hidden; opacity:0; pointer-events:none; background:var(--slide-bg,#fff); }
+.slide.active, .slide.visible { visibility:visible; opacity:1; pointer-events:auto; z-index:1; }
+img,video,canvas,svg { max-width:100%; max-height:100%; }
+.deck-controls { position:fixed; left:50%; bottom:22px; transform:translateX(-50%); z-index:1000; }
+@media (prefers-reduced-motion:reduce) { *,*::before,*::after { animation-duration:0.01ms !important; transition-duration:0.2s !important; } }
+
+/* === F1 RACE CONTROL — CUSTOM WILDCARD === */
+:root {
+  --stage-bg: #0D1017;
+  --slide-bg: #0D1017;
+  --bg: #0D1017;
+  --red: #E10600;
+  --red-dim: rgba(225,6,0,0.15);
+  --amber: #FF8700;
+  --white: #F0F2F5;
+  --white-dim: rgba(240,242,245,0.5);
+  --white-faint: rgba(240,242,245,0.15);
+  --panel: rgba(255,255,255,0.04);
+  --mono: 'JetBrains Mono', monospace;
+}
+
+.slide { background:var(--bg); font-family:'Barlow Condensed', sans-serif; }
+
+/* === BACKGROUND ELEMENTS === */
+
+/* Subtle diagonal stripe pattern — racing flag motif */
+.bg-stripes {
+  position:absolute; right:0; top:0; width:900px; height:1080px; z-index:0;
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0px,
+    transparent 28px,
+    rgba(255,255,255,0.018) 28px,
+    rgba(255,255,255,0.018) 32px
+  );
+}
+
+/* Right panel — darker overlay */
+.right-panel {
+  position:absolute; right:0; top:0; width:760px; height:1080px; z-index:1;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.03) 20%, rgba(255,255,255,0.03));
+  border-left:1px solid rgba(255,255,255,0.06);
+}
+
+/* === LEFT RED STRIPE === */
+.red-stripe {
+  position:absolute; left:0; top:0; bottom:0; width:8px; z-index:5;
+  background: var(--red);
+}
+
+/* === SECTOR TIMING BOXES (top right) === */
+.sector-row {
+  position:absolute; top:72px; right:80px; z-index:10;
+  display:flex; gap:4px; align-items:center;
+  opacity:0; animation: fade-in 0.5s 0.7s ease forwards;
+}
+.sector-box {
+  width:56px; height:22px;
+  display:flex; align-items:center; justify-content:center;
+  font-family:var(--mono); font-size:11px; font-weight:700;
+  letter-spacing:0.08em; text-transform:uppercase;
+}
+.sector-box.s1 { background:var(--amber); color:#1a0a00; }
+.sector-box.s2 { background:var(--amber); color:#1a0a00; }
+.sector-box.s3 { background:var(--red); color:#fff; }
+.sector-label {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.15em;
+  color:var(--white-dim); text-transform:uppercase; margin-right:8px;
+}
+
+/* === MAIN TITLE AREA === */
+.title-area {
+  position:absolute; left:48px; top:50%; transform:translateY(-50%);
+  z-index:10; padding-left:40px;
+}
+
+.eyebrow {
+  font-family:var(--mono); font-size:16px; font-weight:500;
+  letter-spacing:0.2em; color:var(--red); text-transform:uppercase;
+  margin-bottom:20px; display:flex; align-items:center; gap:14px;
+  opacity:0; animation: slide-right 0.5s 0.1s ease forwards;
+}
+.eyebrow::before {
+  content:''; width:32px; height:2px; background:var(--red);
+}
+
+.title {
+  font-size:240px; font-weight:900; line-height:0.85; text-transform:uppercase;
+  letter-spacing:-0.01em; color:var(--white);
+  margin:0 0 0 -6px;
+  opacity:0; animation: slide-right 0.6s 0.25s cubic-bezier(0.22,1,0.36,1) forwards;
+}
+
+/* Red rule under title */
+.title-rule {
+  width:520px; height:5px; background:var(--red); margin:28px 0 28px -2px;
+  opacity:0; animation: rule-extend 0.5s 0.5s ease forwards;
+  transform-origin: left;
+}
+
+.subtitle {
+  font-size:42px; font-weight:600; letter-spacing:0.04em; text-transform:uppercase;
+  color:var(--white-dim); line-height:1.3; max-width:820px;
+  opacity:0; animation: slide-right 0.5s 0.55s ease forwards;
+}
+
+/* === RIGHT DATA PANEL === */
+.data-panel {
+  position:absolute; right:80px; top:50%; transform:translateY(-50%);
+  z-index:10; width:580px;
+  opacity:0; animation: fade-in 0.6s 0.8s ease forwards;
+}
+
+.data-label {
+  font-family:var(--mono); font-size:11px; letter-spacing:0.22em;
+  color:var(--white-faint); text-transform:uppercase; margin-bottom:32px;
+  padding-bottom:12px; border-bottom:1px solid var(--white-faint);
+}
+
+.data-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:16px 0; border-bottom:1px solid rgba(255,255,255,0.05);
+}
+
+.data-key {
+  font-family:var(--mono); font-size:13px; letter-spacing:0.1em;
+  color:var(--white-dim); text-transform:uppercase;
+}
+
+.data-val {
+  font-family:var(--mono); font-size:13px; font-weight:700;
+  letter-spacing:0.06em; color:var(--white);
+}
+
+.data-val.red { color:var(--red); }
+.data-val.amber { color:var(--amber); }
+
+/* bar indicator */
+.bar-wrap {
+  display:flex; align-items:center; gap:10px;
+}
+.bar-track {
+  width:120px; height:4px; background:rgba(255,255,255,0.08);
+}
+.bar-fill {
+  height:4px; background:var(--red);
+  animation: bar-grow 1s 1s ease forwards;
+  width:0;
+}
+.bar-fill.b80 { --target:80%; }
+.bar-fill.b60 { --target:60%; background:var(--amber); }
+.bar-fill.b95 { --target:95%; }
+
+/* === BOTTOM STATUS BAR === */
+.status-bar {
+  position:absolute; bottom:0; left:0; right:0; height:52px; z-index:10;
+  background:var(--red);
+  display:flex; align-items:center; padding:0 48px;
+  gap:48px;
+  opacity:0; animation: fade-in 0.4s 1.0s ease forwards;
+}
+
+.status-item {
+  font-family:var(--mono); font-size:13px; font-weight:700;
+  letter-spacing:0.12em; color:#fff; text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.status-sep {
+  width:1px; height:22px; background:rgba(255,255,255,0.3); flex-shrink:0;
+}
+
+/* === SLIDE NUMBER === */
+.slide-num {
+  position:absolute; bottom:68px; right:80px; z-index:10;
+  font-family:var(--mono); font-size:14px; letter-spacing:0.14em;
+  color:var(--white-dim); text-transform:uppercase;
+  opacity:0; animation: fade-in 0.4s 0.9s ease forwards;
+}
+
+@keyframes slide-right { from{opacity:0;transform:translateX(-24px)} to{opacity:1;transform:translateX(0)} }
+@keyframes fade-in { from{opacity:0} to{opacity:1} }
+@keyframes rule-extend { from{opacity:0;transform:scaleX(0)} to{opacity:1;transform:scaleX(1)} }
+@keyframes bar-grow { to{width:var(--target)} }
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+  <div class="deck-stage">
+    <div class="slide active">
+      <div class="bg-stripes"></div>
+      <div class="right-panel"></div>
+      <div class="red-stripe"></div>
+
+      <!-- Sector timing decorations -->
+      <div class="sector-row">
+        <span class="sector-label">Lap</span>
+        <div class="sector-box s1">S1</div>
+        <div class="sector-box s2">S2</div>
+        <div class="sector-box s3">S3</div>
+      </div>
+
+      <!-- Main title -->
+      <div class="title-area">
+        <div class="eyebrow">F1 Fantasy Intelligence Platform</div>
+        <div class="title">GRID<br>WISE</div>
+        <div class="title-rule"></div>
+        <div class="subtitle">Multi-Agent AI Advisor<br>AWS Bedrock AgentCore</div>
+      </div>
+
+      <!-- Right data panel -->
+      <div class="data-panel">
+        <div class="data-label">System Status — Session 01</div>
+        <div class="data-row">
+          <span class="data-key">Root Agent</span>
+          <div class="bar-wrap">
+            <div class="bar-track"><div class="bar-fill b95" style="--target:95%"></div></div>
+            <span class="data-val red">Claude Sonnet</span>
+          </div>
+        </div>
+        <div class="data-row">
+          <span class="data-key">Sub-Agents</span>
+          <div class="bar-wrap">
+            <div class="bar-track"><div class="bar-fill b80" style="--target:80%"></div></div>
+            <span class="data-val">5 × Haiku</span>
+          </div>
+        </div>
+        <div class="data-row">
+          <span class="data-key">Tools</span>
+          <div class="bar-wrap">
+            <div class="bar-track"><div class="bar-fill b60" style="--target:60%"></div></div>
+            <span class="data-val amber">11 Registered</span>
+          </div>
+        </div>
+        <div class="data-row">
+          <span class="data-key">Memory</span>
+          <span class="data-val">AgentCore STM + LTM</span>
+        </div>
+        <div class="data-row">
+          <span class="data-key">Auth</span>
+          <span class="data-val">AWS Cognito + SigV4</span>
+        </div>
+      </div>
+
+      <!-- Slide number -->
+      <div class="slide-num">01 / 10</div>
+
+      <!-- Bottom status bar -->
+      <div class="status-bar">
+        <span class="status-item">ZEAL PATEL</span>
+        <div class="status-sep"></div>
+        <span class="status-item">AWS Bedrock · AgentCore Runtime</span>
+        <div class="status-sep"></div>
+        <span class="status-item">June 2026</span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+function scaleStage(){
+  const s=document.querySelector('.deck-stage');
+  const vw=window.innerWidth, vh=window.innerHeight;
+  const sc=Math.min(vw/1920, vh/1080);
+  const tx=(vw-1920*sc)/2, ty=(vh-1080*sc)/2;
+  s.style.transform=`translate(${tx}px,${ty}px) scale(${sc})`;
+}
+scaleStage(); window.addEventListener('resize', scaleStage);
+</script>
+</body>
+</html>

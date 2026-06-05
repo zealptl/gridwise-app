@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '/api/v1'
 import { Loader2, Send } from 'lucide-react'
 import { TeamRecommendationCard } from './TeamRecommendationCard'
 
@@ -58,7 +60,7 @@ export function AdvisorChat({ sessionId }: Props) {
     ])
 
     try {
-      const res = await fetch('/api/v1/agent/chat', {
+      const res = await fetch(`${API_BASE}/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
         body: JSON.stringify({
@@ -129,7 +131,7 @@ export function AdvisorChat({ sessionId }: Props) {
     ])
 
     try {
-      const res = await fetch('/api/v1/agent/chat', {
+      const res = await fetch(`${API_BASE}/agent/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
         body: JSON.stringify({
@@ -214,7 +216,7 @@ export function AdvisorChat({ sessionId }: Props) {
         {recommendation && (
           <div className="flex justify-start">
             <TeamRecommendationCard
-              recommendation={recommendation as Parameters<typeof TeamRecommendationCard>[0]['recommendation']}
+              recommendation={recommendation as unknown as Parameters<typeof TeamRecommendationCard>[0]['recommendation']}
               status="complete"
               onApply={recommendationApplied ? undefined : applyRecommendation}
               isApplying={isApplying}
