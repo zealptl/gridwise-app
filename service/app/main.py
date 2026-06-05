@@ -1,7 +1,17 @@
 """GridWise FastAPI Application Entry Point"""
 
 import logging
+import os
 from contextlib import asynccontextmanager
+
+# On macOS, Python 3.11 ships without a cert bundle at its default path.
+# Patch SSL_CERT_FILE to certifi's bundle before any HTTPS calls are made.
+try:
+    import certifi
+    os.environ.setdefault("SSL_CERT_FILE", certifi.where())
+    os.environ.setdefault("REQUESTS_CA_BUNDLE", certifi.where())
+except ImportError:
+    pass
 
 logging.basicConfig(
     level=logging.INFO,

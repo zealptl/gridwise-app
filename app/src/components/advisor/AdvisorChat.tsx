@@ -20,7 +20,10 @@ function getAuthHeader(): Record<string, string> {
     const stored = localStorage.getItem('gridwise-auth')
     if (stored) {
       const { state } = JSON.parse(stored)
-      if (state?.token) return { Authorization: `Bearer ${state.token}` }
+      const headers: Record<string, string> = {}
+      if (state?.token) headers.Authorization = `Bearer ${state.token}`
+      if (state?.accessToken) headers['X-Access-Token'] = state.accessToken
+      if (headers.Authorization) return headers
     }
   } catch {/* ignore */}
   return {}

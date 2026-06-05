@@ -29,8 +29,9 @@ export default function Login() {
     cognitoUser.authenticateUser(authDetails, {
       onSuccess: result => {
         const idToken = result.getIdToken().getJwtToken()
+        const accessToken = result.getAccessToken().getJwtToken()
         const payload = result.getIdToken().decodePayload()
-        setAuth(idToken, payload.sub as string, payload.email as string)
+        setAuth(idToken, payload.sub as string, payload.email as string, accessToken)
         navigate('/advisor')
       },
       onFailure: err => {

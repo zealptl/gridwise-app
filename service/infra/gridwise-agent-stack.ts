@@ -23,14 +23,12 @@ export class GridwiseAgentStack extends cdk.Stack {
     const fastApiRole = iam.Role.fromRoleArn(this, 'ImportedFastApiRole', fastApiRoleArn);
     const gatewayServiceRole = iam.Role.fromRoleArn(this, 'ImportedGatewayServiceRole', gatewayServiceRoleArn);
 
-    // App Runner skipped (not available on free tier).
-    // Update /gridwise/service/fastapi-base-url in SSM with your local/ngrok URL when testing.
-    const fastApiBaseUrlParam = new ssm.StringParameter(this, 'FastApiBaseUrlParam', {
-      parameterName: '/gridwise/service/fastapi-base-url',
-      stringValue: 'http://localhost:8080',
-    });
-
-    const appRunnerUrl = fastApiBaseUrlParam.stringValue;
+    // FastAPI URL is managed by GridwiseServiceStack (ECS Fargate).
+    // For local dev without the service stack deployed, override via:
+    //   aws ssm put-parameter --name /gridwise/service/fastapi-base-url --value <ngrok-url> --overwrite
+    const appRunnerUrl = ssm.StringParameter.valueForStringParameter(
+      this, '/gridwise/service/fastapi-base-url',
+    );
 
     // -------------------------------------------------------------------------
     // Lambda - tools proxy with SigV4 signing (task 5)

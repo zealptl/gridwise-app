@@ -20,6 +20,9 @@ apiClient.interceptors.request.use(
         if (state?.token) {
           config.headers.Authorization = `Bearer ${state.token}`
         }
+        if (state?.accessToken) {
+          config.headers['X-Access-Token'] = state.accessToken
+        }
       }
     } catch {
       // ignore parse errors

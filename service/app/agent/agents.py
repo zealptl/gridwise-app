@@ -14,38 +14,33 @@ ADVISOR_AGENT_NAME = "F1FantasyAdvisor"
 
 ADVISOR_SYSTEM_PROMPT = """You are the GridWise F1 Fantasy Advisor — an expert AI assistant that helps users optimise their F1 Fantasy team.
 
-ORCHESTRATION RULES:
-1. When a user asks for a recommendation, FIRST delegate to DataGathering to collect all necessary data in parallel.
-2. After DataGathering completes, read all three session memory keys: f1_data, intel, fantasy_context.
-3. Synthesise a recommendation based on ALL gathered data.
-4. Present your recommendation using the display_team_recommendation tool with structured data.
-5. WAIT for the user to explicitly confirm before delegating to SubmissionAgent.
-6. Only delegate to SubmissionAgent after receiving explicit user confirmation.
+DATA CONTEXT:
+Data gathering agents ran before you and stored results in session state:
+- f1_data: live session data (lap times, stints, weather, race control) and historical standings
+- intel: weather forecast, betting odds, Reddit sentiment (premium-tier only; absent for free-tier users)
+- fantasy_context: user's current team, live driver/constructor prices, chip availability, active rules
+
+YOUR ROLE ON EACH TURN:
+1. Read f1_data, intel, and fantasy_context from session state.
+2. If this is a new recommendation request: synthesise a team and present it using display_team_recommendation.
+3. If the user is confirming a previous recommendation: delegate immediately to SubmissionAgent — do NOT re-synthesise.
+4. NEVER delegate to SubmissionAgent without explicit user confirmation.
 
 TOOL AVAILABILITY:
-- Free-tier users have access to F1 data tools, fantasy context tools, and submission tools.
-- Premium-tier users additionally have access to intelligence tools (weather, odds).
-- If intel data is unavailable (free-tier user), state this and provide a recommendation with reduced confidence based on available data only.
-- Never refuse to provide a recommendation solely because intelligence tools are unavailable.
-- When all three session state keys (f1_data, intel, fantasy_context) have available: false, respond with a clear honest error message explaining data is unavailable. Do NOT produce a team recommendation or hallucinate tool calls.
+- Free-tier users: F1 data + fantasy context tools available. Intel tools unavailable — state this and reduce confidence.
+- Premium-tier users: all tools available.
+- When all data keys have available: false, return a clear error — do NOT hallucinate a recommendation.
 
 RULE COMPLIANCE:
-Before proposing any team, read the `rules` field from `fantasy_context` in session memory and verify every pick satisfies all active constraints — budget cap, roster shape, DRS boost requirement, and driver eligibility. Never propose a team that violates an active rule.
+Before proposing any team, verify every pick against the `rules` field in fantasy_context: budget cap, roster shape, DRS boost requirement, driver eligibility. Never propose a team that violates an active rule.
 
 REASONING APPROACH:
 - Lead with data: cite specific stats from f1_data and intel to justify every pick.
-- Acknowledge missing data: if an API was unavailable, state this and reduce confidence accordingly.
-- Be explicit about uncertainty: use phrases like "based on available data" or "with reduced confidence" when data is incomplete.
-
-SUBMISSION CONSTRAINT:
-NEVER call SubmissionAgent without explicit user confirmation. The user must actively choose to apply the recommendation.
+- Acknowledge missing data: if an API failed, state it and reduce confidence.
 
 MEMORY CONTEXT:
-- Before each turn, <PAST_CONVERSATIONS> may be injected with relevant memories from prior sessions.
-- Use these memories to personalise recommendations — reference past preferences and strategies.
-- If <PAST_CONVERSATIONS> is empty, provide a recommendation without prior context.
-- Free-tier users: intelligence tools (weather, odds) are unavailable. State this and reduce confidence.
-- Premium-tier users: all 11 tools available.
+- <PAST_CONVERSATIONS> may contain memories from prior sessions — use them to personalise recommendations.
+- If <PAST_CONVERSATIONS> is empty, proceed without prior context.
 """
 
 
@@ -66,7 +61,7 @@ def _build_f1_data_agent(toolset):
             "If an individual endpoint fails, include {'error': '...', 'available': false} under that sub-key. "
             "Return a structured JSON summary of what you collected."
         ),
-        tools=toolset or [],
+        tools=[toolset] if toolset is not None else [],
     )
 
 
@@ -87,7 +82,7 @@ def _build_intel_agent(toolset):
             "Write all results to session memory under key 'intel'. "
             "Return a structured JSON summary."
         ),
-        tools=toolset or [],
+        tools=[toolset] if toolset is not None else [],
     )
 
 
@@ -109,7 +104,7 @@ def _build_fantasy_context_agent(toolset):
             "Write results to session memory under key 'fantasy_context' with sub-keys: team, prices, chips, rules. "
             "Return a structured JSON summary."
         ),
-        tools=toolset or [],
+        tools=[toolset] if toolset is not None else [],
     )
 
 
@@ -134,7 +129,7 @@ def _build_submission_agent(gateway):
             "On submission success, confirm the team_id. On failure, report the error. "
             "NEVER skip validation. NEVER call submit_team without a prior successful validation."
         ),
-        tools=toolset or [],
+        tools=[toolset] if toolset is not None else [],
     )
 
 
@@ -206,29 +201,34 @@ def build_f1_advisor_graph(user_jwt: Optional[str] = None, user_id: str = "anony
 
     submission_agent = _build_submission_agent(gateway)
 
-    if tools_available:
-        from google.adk.agents import ParallelAgent  # type: ignore
-        data_gathering = ParallelAgent(
-            name="DataGathering",
-            description="Runs F1DataAgent, IntelAgent, and FantasyContextAgent concurrently.",
-            sub_agents=[
-                _build_f1_data_agent(f1_toolset),
-                _build_intel_agent(intel_toolset),
-                _build_fantasy_context_agent(fantasy_toolset),
-            ],
-        )
-        advisor_sub_agents = [data_gathering, submission_agent]
-    else:
-        advisor_sub_agents = [submission_agent]
+    from google.adk.agents import ParallelAgent, SequentialAgent  # type: ignore
+    data_gathering = ParallelAgent(
+        name="DataGathering",
+        description="Runs F1DataAgent, IntelAgent, and FantasyContextAgent concurrently.",
+        sub_agents=[
+            _build_f1_data_agent(f1_toolset),
+            _build_intel_agent(intel_toolset),
+            _build_fantasy_context_agent(fantasy_toolset),
+        ],
+    )
 
     advisor = LlmAgent(
         name=ADVISOR_AGENT_NAME,
         model=LiteLlm(model=SONNET),
-        description="Root F1 Fantasy Advisor — orchestrates data gathering and team recommendation.",
+        description="Synthesises gathered data into an F1 Fantasy team recommendation.",
         instruction=ADVISOR_SYSTEM_PROMPT,
-        sub_agents=advisor_sub_agents,
+        sub_agents=[submission_agent],
         tools=memory_tools,
         after_agent_callback=_persist_session_callback,
+    )
+
+    # SequentialAgent guarantees DataGathering writes session state before the
+    # advisor runs. Without this wrapper, transfer_to_agent is one-way in ADK
+    # and the advisor never resumes after DataGathering completes.
+    root_agent = SequentialAgent(
+        name="GridwiseAdvisorPipeline",
+        description="Collects F1 data then synthesises a fantasy team recommendation.",
+        sub_agents=[data_gathering, advisor],
     )
 
     logger.info(
@@ -237,4 +237,4 @@ def build_f1_advisor_graph(user_jwt: Optional[str] = None, user_id: str = "anony
         user_id,
         tools_available,
     )
-    return advisor, session_service, memory_svc, tools_available
+    return root_agent, session_service, memory_svc, tools_available

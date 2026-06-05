@@ -2,6 +2,7 @@
 import 'source-map-support/register'
 import * as cdk from 'aws-cdk-lib'
 import { GridwiseFoundationStack } from '../gridwise-foundation-stack'
+import { GridwiseServiceStack } from '../gridwise-service-stack'
 import { GridwiseAgentStack } from '../gridwise-agent-stack'
 
 const app = new cdk.App()
@@ -13,5 +14,9 @@ const env = {
 
 const foundation = new GridwiseFoundationStack(app, 'GridwiseFoundationStack', { env })
 
+const service = new GridwiseServiceStack(app, 'GridwiseServiceStack', { env })
+service.addDependency(foundation)
+
 const agent = new GridwiseAgentStack(app, 'GridwiseAgentStack', { env })
 agent.addDependency(foundation)
+agent.addDependency(service)

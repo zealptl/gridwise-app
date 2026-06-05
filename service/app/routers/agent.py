@@ -7,7 +7,7 @@ import os
 import uuid
 from typing import Any, AsyncGenerator, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Security
+from fastapi import APIRouter, Depends, Header, HTTPException, Security
 from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, Field
@@ -40,6 +40,16 @@ def _extract_sub(jwt_token: str) -> Optional[str]:
         from jose import jwt as jose_jwt
         claims = jose_jwt.get_unverified_claims(jwt_token)
         return claims.get("sub")
+    except Exception:
+        return None
+
+
+def _extract_token_use(jwt_token: str) -> Optional[str]:
+    try:
+        import base64, json as _json
+        parts = jwt_token.split(".")
+        padded = parts[1] + "=" * (4 - len(parts[1]) % 4)
+        return _json.loads(base64.urlsafe_b64decode(padded)).get("token_use")
     except Exception:
         return None
 
@@ -141,6 +151,7 @@ async def chat_stream(
     request: CopilotKitChatRequest,
     user_id: str = Depends(get_current_user),
     raw_jwt: str = Depends(get_raw_jwt),
+    x_access_token: Optional[str] = Header(default=None, alias="X-Access-Token"),
 ) -> StreamingResponse:
     """AG-UI streaming endpoint consumed by CopilotKit's CopilotChat component."""
     # Validate sub claim can be extracted
@@ -148,8 +159,14 @@ async def chat_stream(
     if not sub:
         raise HTTPException(status_code=401, detail="Cannot extract user identity from token")
 
+    # Use the Cognito access token for the AgentCore Gateway (it requires an access
+    # token, not an ID token). Fall back to the ID token if access token not provided.
+    gateway_jwt = x_access_token or raw_jwt
+    logger.info("chat_stream: x_access_token present=%s, gateway_jwt token_use=%s",
+                bool(x_access_token), _extract_token_use(gateway_jwt))
+
     return StreamingResponse(
-        _stream_ag_ui(request, sub, raw_jwt),
+        _stream_ag_ui(request, sub, raw_jwt, gateway_jwt=gateway_jwt),
         media_type="text/event-stream",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
@@ -167,6 +184,7 @@ async def _stream_ag_ui(
     request: CopilotKitChatRequest,
     user_id: str,
     user_jwt: str,
+    gateway_jwt: Optional[str] = None,
 ) -> AsyncGenerator[str, None]:
     thread_id = request.threadId
     run_id = request.runId
@@ -205,7 +223,7 @@ async def _stream_ag_ui(
             from google.adk.runners import Runner  # type: ignore
             from google.genai import types as genai_types  # type: ignore
 
-            result = build_f1_advisor_graph(user_jwt=user_jwt, user_id=user_id)
+            result = build_f1_advisor_graph(user_jwt=gateway_jwt or user_jwt, user_id=user_id)
             if isinstance(result, tuple) and len(result) == 4:
                 advisor, session_service, memory_svc, tools_available = result
             elif isinstance(result, tuple):
