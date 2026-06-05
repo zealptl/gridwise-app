@@ -3,6 +3,8 @@ import { Construct } from 'constructs';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
 import * as ecs from 'aws-cdk-lib/aws-ecs';
 import * as elbv2 from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
+import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as logs from 'aws-cdk-lib/aws-logs';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
@@ -103,6 +105,9 @@ export class GridwiseServiceStack extends cdk.Stack {
           'http://localhost:5173',
           'http://localhost:5174',
           'http://localhost:5175',
+          'https://gridwise-app-zealptls-projects.vercel.app',
+          'https://gridwise-app.vercel.app',
+          'https://d1b7z7zmu72yj.cloudfront.net',
         ]),
       },
       secrets: {
@@ -153,7 +158,25 @@ export class GridwiseServiceStack extends cdk.Stack {
       deregistrationDelay: cdk.Duration.seconds(15),
     });
 
-    this.serviceUrl = `http://${alb.loadBalancerDnsName}`;
+    // -------------------------------------------------------------------------
+    // CloudFront — free *.cloudfront.net HTTPS domain in front of the ALB
+    // -------------------------------------------------------------------------
+    const distribution = new cloudfront.Distribution(this, 'FastApiCdn', {
+      comment: 'gridwise-fastapi HTTPS endpoint',
+      defaultBehavior: {
+        origin: new origins.HttpOrigin(alb.loadBalancerDnsName, {
+          protocolPolicy: cloudfront.OriginProtocolPolicy.HTTP_ONLY,
+          httpPort: 80,
+        }),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+        cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+        originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      },
+    });
+
+    // CloudFront URL is the HTTPS entry point — use this everywhere
+    this.serviceUrl = `https://${distribution.distributionDomainName}`;
 
     // -------------------------------------------------------------------------
     // Outputs
@@ -161,7 +184,12 @@ export class GridwiseServiceStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'FastApiServiceUrl', {
       value: this.serviceUrl,
       exportName: 'FastApiServiceUrl',
-      description: 'FastAPI ALB URL',
+      description: 'FastAPI CloudFront HTTPS URL',
+    });
+
+    new cdk.CfnOutput(this, 'FastApiAlbUrl', {
+      value: `http://${alb.loadBalancerDnsName}`,
+      description: 'FastAPI ALB URL (internal — use CloudFront URL publicly)',
     });
   }
 }
